@@ -144,14 +144,14 @@
     // --- Pastikan supabase client global ---
     let supabase = null;
     function createSupabaseClient(config) {
-      if (!config) return null;
+      if (!config || !window.supabase) return null;
       const { createClient } = window.supabase;
       return createClient(config.url, config.anonKey);
     }
     // Inisialisasi supabase global (untuk guest/publik)
     if (!supabase) {
       const config = getSupabaseConfig();
-      if (config) {
+      if (config && window.supabase) {
         const { createClient } = window.supabase;
         supabase = createClient(config.url, config.anonKey);
       }
