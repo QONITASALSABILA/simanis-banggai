@@ -8,85 +8,29 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <!-- Supabase JS v2.39.0+ CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/+esm"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIMANIS Banggai</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Supabase JS (UMD) -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script type="text/babel">
 window.addEventListener('DOMContentLoaded', function() {
     const { useEffect, useMemo, useState, useRef } = React;
 
-      const KUAView = () => {
-        // ...existing code...
-        const handleDeleteKua = async (kua) => {
-          if (!window.confirm(`Yakin ingin menghapus data \"${kua.nama}\"?`)) return;
-          try {
-            setLoading(true);
-            const { error } = await supabase.from('kua_items').delete().eq('id', kua.id);
-            if (error) throw error;
-            await loadData();
-          } catch (e) {
-            setDataError(e?.message || String(e));
-          } finally {
-            setLoading(false);
-          }
-        };
+    const defaultRKT = [
+      { id: 1, pilar: "Layanan KUA Prima", kegiatan: "Standardisasi Layanan KUA (Service Excellence)", target: "23 KUA", tw: "TW I", status: "Selesai", progress: 100 },
+      { id: 2, pilar: "Layanan KUA Prima", kegiatan: "Digitalisasi & Validasi Data SIMKAH", target: "100% Data", tw: "TW I-IV", status: "Proses", progress: 80 },
+      { id: 3, pilar: "Keluarga Sakinah", kegiatan: "Bimbingan Perkawinan (Bimwin) Catin", target: "50 Angkatan", tw: "TW I-IV", status: "Proses", progress: 45 },
+      { id: 4, pilar: "Penyuluhan Agama", kegiatan: "Majelis Taklim Berbadan Hukum", target: "100 MT", tw: "TW I-IV", status: "Proses", progress: 60 },
+      { id: 5, pilar: "Moderasi Beragama", kegiatan: "Kampung Moderasi Beragama (KMB)", target: "2 Desa Binaan", tw: "TW II", status: "Proses", progress: 50 },
+    ];
 
-        // Publish all KUA to kua_public
-        const handlePublishKua = async () => {
-          if (!window.confirm('Publikasikan seluruh data KUA ke GEMILANG? Data lama di GEMILANG akan diganti.')) return;
-          try {
-            setLoading(true);
-            // Hapus semua data di kua_public
-            let { error } = await supabase.from('kua_public').delete().neq('id', 0);
-            if (error) throw error;
-            // Insert semua data KUA user ke kua_public
-            const rows = kuaData.map((k) => ({
-              nama: k.nama,
-              alamat: k.alamat,
-              kepala: k.kepala,
-              kontak: k.kontak,
-              status: k.status,
-              layanan: k.layanan,
-              // tambahkan kolom lain jika ada
-            }));
-            if (rows.length > 0) {
-              let { error: insErr } = await supabase.from('kua_public').insert(rows);
-              if (insErr) throw insErr;
-            }
-            alert('Data KUA berhasil dipublikasikan ke GEMILANG!');
-          } catch (e) {
-            setDataError(e?.message || String(e));
-          } finally {
-            setLoading(false);
-          }
-        };
-
-        return (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden animate-fade-in">
-            <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-              <div>
-                <h2 className="font-bold text-lg text-slate-800">Database KUA Kecamatan (Online)</h2>
-                <p className="text-sm text-slate-500">Data tersimpan per-user di Supabase.</p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                <input
-                  value={searchKua}
-                  onChange={(e) => setSearchKua(e.target.value)}
-                  type="text"
-                  placeholder="Cari KUA..."
-                  className="w-full md:w-72 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500"
-                />
-                {session ? (
-                  <div className="flex gap-2 flex-wrap">
-                    <button onClick={loadData} className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium">Refresh</button>
-                    <button onClick={handleAddKua} className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium">Tambah KUA</button>
-                    <button onClick={handlePublishKua} className="px-3 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium">Publikasikan ke GEMILANG</button>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        );
-      }
     const defaultKUA = [
       { id: 'k1', nama: "KUA Kec. Moilong", kepala: "H. Mohamad Zulkarnain, S.Ag, MA", status: "Prima", layanan: "Online" },
       { id: 'k2', nama: "KUA Kec. Batui Selatan", kepala: "N.A Sustiono, S.HI", status: "Prima", layanan: "Online" },
@@ -94,6 +38,20 @@ window.addEventListener('DOMContentLoaded', function() {
       { id: 'k4', nama: "KUA Kec. Masama", kepala: "Ismail, S.HI", status: "Siaga", layanan: "Hybrid" },
       { id: 'k5', nama: "KUA Kec. Simpang Raya", kepala: "Ahmad Zaenal Ihrom, S.Th.I", status: "Prima", layanan: "Online" }
     ];
+
+    // --- DEFINISI IKON (Wajib ada agar tidak error) ---
+    const Icons = {
+        LayoutDashboard: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>,
+        Users: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+        FileText: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>,
+        Settings: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
+        LogOut: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>,
+        RefreshCw: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>,
+        Clock: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+        Edit2: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>,
+        Save: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+    };
+    const { LayoutDashboard, Users, FileText, Settings, LogOut, RefreshCw, Clock, Edit2, Save } = Icons;
 
     function safeJsonParse(v) {
       try { return JSON.parse(v); } catch { return null; }
