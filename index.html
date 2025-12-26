@@ -1167,10 +1167,16 @@
       // Data KUA publik (baca dari kua_public)
       const [kuaPublik, setKuaPublik] = useState([]);
       useEffect(() => {
-        if (!session && supabase) {
-          supabase.from('kua_public').select('*').order('nama', { ascending: true }).then(({ data }) => {
-            setKuaPublik(data || []);
-          });
+        // Pastikan supabase sudah terinisialisasi
+        if (!session && window.supabase && typeof supabase !== 'undefined') {
+          supabase.from('kua_public').select('*').order('nama', { ascending: true })
+            .then(({ data, error }) => {
+              if (error) setKuaPublik([]);
+              else setKuaPublik(data || []);
+            })
+            .catch(() => setKuaPublik([]));
+        } else {
+          setKuaPublik([]);
         }
       }, [session]);
 
