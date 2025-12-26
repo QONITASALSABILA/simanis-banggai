@@ -139,10 +139,20 @@
       localStorage.setItem('simanis_supabase', JSON.stringify({ url, anonKey }));
     }
 
+    // --- Pastikan supabase client global ---
+    let supabase = null;
     function createSupabaseClient(config) {
       if (!config) return null;
       const { createClient } = window.supabase;
       return createClient(config.url, config.anonKey);
+    }
+    // Inisialisasi supabase global (untuk guest/publik)
+    if (!supabase) {
+      const config = getSupabaseConfig();
+      if (config) {
+        const { createClient } = window.supabase;
+        supabase = createClient(config.url, config.anonKey);
+      }
     }
 
     const PrayerWidget = () => {
