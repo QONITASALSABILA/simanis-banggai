@@ -384,6 +384,10 @@
       const [editKuaId, setEditKuaId] = useState(null);
 
       const [searchKua, setSearchKua] = useState('');
+      const [searchRkt, setSearchRkt] = useState('');
+      const [filterPilar, setFilterPilar] = useState('all');
+      const [filterStatus, setFilterStatus] = useState('all');
+      const [filterTw, setFilterTw] = useState('all');
 
       useEffect(() => {
         if (!supabase) return;
@@ -659,6 +663,33 @@
         return { totalRkt, onlineKua };
       }, [rktData, kuaData]);
 
+      const pilarOptions = useMemo(() => {
+        const set = new Set();
+        (rktData || []).forEach((x) => {
+          if (x.pilar) set.add(x.pilar);
+        });
+        return Array.from(set);
+      }, [rktData]);
+
+      const filteredRkt = useMemo(() => {
+        const q = searchRkt.trim().toLowerCase();
+        return (rktData || []).filter((item) => {
+          if (filterPilar !== 'all' && item.pilar !== filterPilar) return false;
+          const statusValue = item.status || 'Belum';
+          if (filterStatus !== 'all' && statusValue !== filterStatus) return false;
+          if (filterTw !== 'all') {
+            const twVal = (item.tw || '').toLowerCase();
+            if (!twVal.includes(filterTw.toLowerCase())) return false;
+          }
+          if (!q) return true;
+          return (
+            (item.kegiatan || '').toLowerCase().includes(q) ||
+            (item.target || '').toLowerCase().includes(q) ||
+            (item.pilar || '').toLowerCase().includes(q)
+          );
+        });
+      }, [rktData, searchRkt, filterPilar, filterStatus, filterTw]);
+
       const filteredKua = useMemo(() => {
         const q = searchKua.trim().toLowerCase();
         if (!q) return kuaData;
@@ -752,7 +783,7 @@
           <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <h2 className="font-bold text-lg text-slate-800">Manajemen RKT (Online)</h2>
-              <p className="text-sm text-slate-500">Klik ikon pensil untuk mengubah status/progres.</p>
+              <p className="text-sm text-slate-500">Gunakan filter di bawah untuk menyaring program RKT.</p>
             </div>
             {session ? (
               <button onClick={loadData} className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium">
@@ -768,19 +799,73 @@
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-slate-50 text-slate-500 border-b border-slate-200 font-medium">
-                  <tr>
-                    <th className="px-6 py-4">Kegiatan</th>
-                    <th className="px-6 py-4">Target</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4">Progres</th>
-                    <th className="px-6 py-4">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {rktData.map((item) => (
+            <div className="p-4 pt-3">
+              <div className="mb-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Cari Kegiatan / Target</label>
+                  <input
+                    type="text"
+                    value={searchRkt}
+                    onChange={(e) => setSearchRkt(e.target.value)}
+                    placeholder="Ketik kata kunci..."
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Pilar</label>
+                  <select
+                    value={filterPilar}
+                    onChange={(e) => setFilterPilar(e.target.value)}
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500"
+                  >
+                    <option value="all">Semua Pilar</option>
+                    {pilarOptions.map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Status</label>
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500"
+                  >
+                    <option value="all">Semua Status</option>
+                    <option value="Belum">Belum</option>
+                    <option value="Proses">Proses</option>
+                    <option value="Selesai">Selesai</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Triwulan (TW)</label>
+                  <select
+                    value={filterTw}
+                    onChange={(e) => setFilterTw(e.target.value)}
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500"
+                  >
+                    <option value="all">Semua TW</option>
+                    <option value="tw i">TW I</option>
+                    <option value="tw ii">TW II</option>
+                    <option value="tw iii">TW III</option>
+                    <option value="tw iv">TW IV</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-slate-50 text-slate-500 border-b border-slate-200 font-medium">
+                    <tr>
+                      <th className="px-6 py-4">Kegiatan</th>
+                      <th className="px-6 py-4">Target</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4">Progres</th>
+                      <th className="px-6 py-4">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredRkt.map((item) => (
                     <tr key={item.id} className={editRktId === item.id ? "bg-amber-50" : "hover:bg-slate-50"}>
                       <td className="px-6 py-4">
                         <span className="text-xs font-bold text-emerald-600 block mb-1">{item.pilar}</span>
@@ -836,8 +921,16 @@
                       </td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
+                    {filteredRkt.length === 0 && (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-6 text-center text-xs text-slate-500">
+                          Tidak ada data RKT yang cocok dengan filter saat ini.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
