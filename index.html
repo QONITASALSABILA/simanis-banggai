@@ -8,41 +8,8 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SIMANIS Banggai - Sistem Manajemen Bimas Islam</title>
-  <meta name="theme-color" content="#0f766e" />
-  <link rel="manifest" href="./manifest.webmanifest" />
-  <link rel="icon" type="image/svg+xml" href="./icon-512.svg" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-fade-in { animation: fadeIn 0.35s ease-out forwards; }
-
-    @keyframes marquee {
-      0% { transform: translateX(100%); }
-      100% { transform: translateX(-100%); }
-    }
-    .animate-marquee { display: inline-block; white-space: nowrap; animation: marquee 20s linear infinite; }
-    .animate-marquee:hover { animation-play-state: paused; }
-
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #f1f1f1; }
-    ::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #059669; }
-  </style>
-</head>
-<body>
-  <div id="root"></div>
-
   <script type="text/babel">
+window.addEventListener('DOMContentLoaded', function() {
     const { useEffect, useMemo, useState, useRef } = React;
 
       const KUAView = () => {
@@ -115,7 +82,9 @@
                 ) : null}
               </div>
             </div>
-            }
+          </div>
+        );
+      }
     const defaultKUA = [
       { id: 'k1', nama: "KUA Kec. Moilong", kepala: "H. Mohamad Zulkarnain, S.Ag, MA", status: "Prima", layanan: "Online" },
       { id: 'k2', nama: "KUA Kec. Batui Selatan", kepala: "N.A Sustiono, S.HI", status: "Prima", layanan: "Online" },
@@ -142,14 +111,14 @@
     // --- Pastikan supabase client global ---
     let supabase = null;
     function createSupabaseClient(config) {
-      if (!config || !window.supabase) return null;
+      if (!config) return null;
       const { createClient } = window.supabase;
       return createClient(config.url, config.anonKey);
     }
     // Inisialisasi supabase global (untuk guest/publik)
     if (!supabase) {
       const config = getSupabaseConfig();
-      if (config && window.supabase) {
+      if (config) {
         const { createClient } = window.supabase;
         supabase = createClient(config.url, config.anonKey);
       }
@@ -200,13 +169,7 @@
           </div>
           <div className="flex-1 flex items-center overflow-hidden w-full bg-emerald-950/30 rounded-lg py-3 px-2 border border-emerald-500/20 backdrop-blur-sm relative">
             <div className="animate-marquee w-full whitespace-nowrap">
-              {prayers.map((p, idx) => (
-                <span key={idx} className="inline-flex items-center mx-6 text-lg font-bold">
-                  <span className="mr-2 text-xl">{p.icon}</span>
-                  <span className="text-emerald-200 mr-2">{p.name}:</span>
-                  <span className="text-white">{p.time}</span>
-                </span>
-              ))}
+              {/* ...existing code... */}
             </div>
           </div>
         </div>
