@@ -1290,72 +1290,20 @@
       }
 
       return (
-        <>
-          {/* Header hijau judul */}
-          <div className="bg-gradient-to-br from-emerald-700 to-emerald-900">
-            <div className="max-w-6xl mx-auto px-4 py-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <h1 className="text-white font-bold text-xl">SIMANIS Banggai</h1>
-                  <p className="text-emerald-100 text-sm opacity-90">Sistem Manajemen Bimas Islam (Mode Online + Supabase)</p>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {session ? (
-                    <>
-                      <span className="text-xs text-emerald-100 bg-white/10 border border-white/10 px-3 py-1 rounded-full">
-                        {session.user.email}
-                      </span>
-                      <button onClick={handleLogout} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white border border-white/10 text-sm">
-                        <LogOut width={16} height={16} /> Logout
-                      </button>
-                    </>
-                  ) : (
-                    <span className="text-xs text-emerald-100 bg-white/10 border border-white/10 px-3 py-1 rounded-full">
-                      Belum login
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="mt-5 flex gap-2 flex-wrap">
-                <button onClick={() => setActiveTab('dashboard')} className={`px-4 py-2 rounded-lg text-sm font-medium border ${activeTab === 'dashboard' ? 'bg-white text-emerald-800 border-white' : 'bg-white/10 text-white border-white/10 hover:bg-white/15'}`}>
-                  <span className="inline-flex items-center gap-2"><LayoutDashboard width={16} height={16} /> Dashboard</span>
-                </button>
-                <button onClick={() => setActiveTab('rkt')} className={`px-4 py-2 rounded-lg text-sm font-medium border ${activeTab === 'rkt' ? 'bg-white text-emerald-800 border-white' : 'bg-white/10 text-white border-white/10 hover:bg-white/15'}`}>
-                  <span className="inline-flex items-center gap-2"><FileText width={16} height={16} /> RKT</span>
-                </button>
-                <button onClick={() => setActiveTab('kua')} className={`px-4 py-2 rounded-lg text-sm font-medium border ${activeTab === 'kua' ? 'bg-white text-emerald-800 border-white' : 'bg-white/10 text-white border-white/10 hover:bg-white/15'}`}>
-                  <span className="inline-flex items-center gap-2"><Users width={16} height={16} /> KUA</span>
-                </button>
-                <button onClick={() => setActiveTab('settings')} className={`px-4 py-2 rounded-lg text-sm font-medium border ${activeTab === 'settings' ? 'bg-white text-emerald-800 border-white' : 'bg-white/10 text-white border-white/10 hover:bg-white/15'}`}>
-                  <span className="inline-flex items-center gap-2"><Settings width={16} height={16} /> Supabase</span>
-                </button>
-                {session ? (
-                  <button onClick={handleResetData} className="px-4 py-2 rounded-lg text-sm font-medium border bg-white/10 text-white border-white/10 hover:bg-white/15 inline-flex items-center gap-2">
-                    <RefreshCw width={16} height={16} /> Reset Data
-                  </button>
-                ) : null}
-              </div>
-            </div>
+        <Layout
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          session={session}
+          onLogout={handleLogout}
+          onResetData={handleResetData}
+          loading={loading}
+          dataError={dataError}
+        >
+          <div className="max-w-6xl mx-auto px-4">
+            <PublicMarquee />
           </div>
-          {/* Marquee di bawah header, selalu tampil */}
-          <div className="bg-white">
-            <div className="max-w-6xl mx-auto px-4">
-              <PublicMarquee />
-            </div>
-          </div>
-          {/* Konten utama aplikasi */}
-          <Layout
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            session={session}
-            onLogout={handleLogout}
-            onResetData={handleResetData}
-            loading={loading}
-            dataError={dataError}
-          >
-            {view}
-          </Layout>
-        </>
+          {view}
+        </Layout>
       );
     };
 
