@@ -84,7 +84,7 @@ window.addEventListener('DOMContentLoaded', function() {
     // Inisialisasi supabase global (untuk guest/publik)
     if (!supabase) {
       const config = getSupabaseConfig();
-      if (config) {
+      if (config && window.supabase) {
         const { createClient } = window.supabase;
         supabase = createClient(config.url, config.anonKey);
       }
@@ -135,7 +135,13 @@ window.addEventListener('DOMContentLoaded', function() {
           </div>
           <div className="flex-1 flex items-center overflow-hidden w-full bg-emerald-950/30 rounded-lg py-3 px-2 border border-emerald-500/20 backdrop-blur-sm relative">
             <div className="animate-marquee w-full whitespace-nowrap">
-              {/* ...existing code... */}
+              {prayers.map((p, idx) => (
+                <span key={idx} className="inline-flex items-center mx-6 text-sm font-bold">
+                  <span className="mr-2">{p.icon}</span>
+                  <span className="text-emerald-200 mr-1">{p.name}:</span>
+                  <span className="text-white">{p.time}</span>
+                </span>
+              ))}
             </div>
           </div>
         </div>
@@ -364,12 +370,16 @@ window.addEventListener('DOMContentLoaded', function() {
         let unsub = null;
 
         const init = async () => {
-          const { data } = await supabase.auth.getSession();
-          setSession(data.session);
-          const { data: listener } = supabase.auth.onAuthStateChange((_event, s) => {
-            setSession(s);
-          });
-          unsub = listener.subscription;
+          try {
+            const { data } = await supabase.auth.getSession();
+            setSession(data.session);
+            const { data: listener } = supabase.auth.onAuthStateChange((_event, s) => {
+              setSession(s);
+            });
+            unsub = listener.subscription;
+          } catch (e) {
+            console.error("Auth init error:", e);
+          }
         };
 
         init();
