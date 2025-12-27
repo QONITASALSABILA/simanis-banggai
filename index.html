@@ -1145,11 +1145,28 @@
         </div>
       );
 
-      const PublicMarquee = () => (
-        <div className="overflow-hidden whitespace-nowrap bg-emerald-50 border border-emerald-100 rounded-lg py-2 px-4 mb-6">
-          <span className="animate-marquee text-emerald-700 font-medium">Selamat datang di SIMANIS Banggai! Layanan digital Bimas Islam, data KUA, berita, dan konsultasi online tersedia di sini.</span>
-        </div>
-      );
+      const PublicMarquee = () => {
+        const [text, setText] = React.useState('');
+        React.useEffect(() => {
+          if (window.supabase) {
+            window.supabase
+              .createClient(getSupabaseConfig().url, getSupabaseConfig().anonKey)
+              .from('marquee_text')
+              .select('text')
+              .limit(1)
+              .then(({ data, error }) => {
+                if (data && data.length > 0) setText(data[0].text);
+              });
+          }
+        }, []);
+        return (
+          <div className="overflow-hidden whitespace-nowrap bg-emerald-50 border border-emerald-100 rounded-lg py-2 px-4 mb-6">
+            <span className="animate-marquee text-emerald-700 font-medium">
+              {text || '...'}
+            </span>
+          </div>
+        );
+      };
 
       const PublicLayanan = () => (
         <div className="my-8">
