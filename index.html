@@ -1299,6 +1299,7 @@
           loading={loading}
           dataError={dataError}
         >
+          {session ? <PublicMarquee /> : null}
           {view}
         </Layout>
       );
