@@ -515,8 +515,13 @@
 
       const handleAuth = async (e) => {
         e.preventDefault();
-        if (!supabase) return;
-
+        
+        // Cek apakah library Supabase berhasil dimuat
+        if (!window.supabase || !supabase) {
+          setAuthError("Gagal terhubung ke sistem database (Library Supabase belum dimuat). Mohon Refresh halaman dan pastikan koneksi internet stabil.");
+          return;
+        }
+        
         setAuthError('');
         setAuthSuccess('');
         const email = (emailRef.current?.value || '').trim();
