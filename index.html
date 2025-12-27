@@ -24,6 +24,7 @@
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
     window.supabase = { createClient };
+    window.supabaseReady = true;
   </script>
 </head>
 <body>
@@ -52,12 +53,22 @@
   </script>
 
   <script type="text/babel">
-    const { useEffect, useMemo, useState, useRef } = React;
-
-    // Cek apakah React berhasil di-load
-    if (typeof React === 'undefined' || typeof ReactDOM === 'undefined') {
-      throw new Error("Library React gagal dimuat. Cek koneksi internet Anda.");
+    // Tunggu sampai window.supabase tersedia
+    function waitForSupabase(cb) {
+      if (window.supabase && window.supabase.createClient) {
+        cb();
+      } else {
+        setTimeout(() => waitForSupabase(cb), 100);
+      }
     }
+
+    waitForSupabase(() => {
+      const { useEffect, useMemo, useState, useRef } = React;
+
+      // Cek apakah React berhasil di-load
+      if (typeof React === 'undefined' || typeof ReactDOM === 'undefined') {
+        throw new Error("Library React gagal dimuat. Cek koneksi internet Anda.");
+      }
 
     const defaultRKT = [
       { id: 1, pilar: "Layanan KUA Prima", kegiatan: "Standardisasi Layanan KUA (Service Excellence)", target: "23 KUA", tw: "TW I", status: "Selesai", progress: 100 },
