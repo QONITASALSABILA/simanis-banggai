@@ -213,6 +213,7 @@
       // Default text ditambahkan agar animasi selalu berjalan walaupun fetch gagal/belum setup
       const defaultText = "Selamat Datang di Aplikasi SIMANIS Banggai - Sistem Manajemen Bimas Islam Terpadu. Akses Layanan KUA & Informasi Keagamaan dengan Mudah dan Cepat.";
       const [text, setText] = useState(defaultText);
+      const [isLoaded, setIsLoaded] = useState(false);
       
       useEffect(() => {
         if (window.supabase) {
@@ -225,8 +226,10 @@
                 .order('id', { ascending: true })
                 .limit(1)
                 .then(({ data, error }) => {
-                  if (data && data.length > 0 && data[0].text) {
-                     setText(data[0].text);
+                  if (data && data.length > 0) {
+                     // Ambil text dari DB apa adanya (termasuk jika kosong)
+                     setText(data[0].text || '');
+                     setIsLoaded(true);
                   }
                 })
                 .catch(err => {
@@ -236,8 +239,8 @@
         }
       }, []);
 
-      // Sembunyikan marquee jika teks kosong (Fitur Hapus)
-      if (!text) return null;
+      // Jika sudah berhasil load dari DB dan teksnya kosong, sembunyikan marquee
+      if (isLoaded && text === '') return null;
 
       return (
         <div className="overflow-hidden whitespace-nowrap bg-emerald-50 border border-emerald-100 rounded-lg py-2 px-4 mb-6 relative">
@@ -365,7 +368,7 @@
                client.from('marquee_text').select('id, text').order('id', { ascending: true }).limit(1).maybeSingle()
                .then(({ data }) => { 
                  if(data) {
-                   setMarqueeText(data.text);
+                   setMarqueeText(data.text || '');
                    setMarqueeId(data.id);
                  }
                  loadedRef.current = true;
@@ -386,6 +389,16 @@
             setMarqueeMsg('Berhasil disimpan! Halaman akan dimuat ulang...');
             setTimeout(() => window.location.reload(), 1000);
           }
+      };
+
+      const handleResetMarqueeDB = async () => {
+          if(!config) return;
+          if(!confirm("Tombol ini akan MENGHAPUS & MERESET tabel teks berjalan di database. Gunakan jika fitur edit macet. Lanjutkan?")) return;
+          const client = createSupabaseClient(config);
+          setMarqueeMsg('Mereset database...');
+          await client.from('marquee_text').delete().neq('id', 0); // Hapus semua
+          await client.from('marquee_text').insert({ id: 1, text: 'Selamat Datang di SIMANIS Banggai.' }); // Isi default
+          window.location.reload();
       };
 
       return (
@@ -429,6 +442,7 @@
                         <span className="text-xs text-slate-500">{marqueeMsg}</span>
                         <button onClick={handleSaveMarquee} className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium">Simpan Teks</button>
                     </div>
+                    <div className="text-right mt-2"><button onClick={handleResetMarqueeDB} className="text-xs text-red-400 hover:text-red-600 underline">Reset Database Teks (Jika Error)</button></div>
                   </div>
                 </>
               ) : (
