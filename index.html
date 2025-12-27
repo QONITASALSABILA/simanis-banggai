@@ -24,32 +24,38 @@
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div id="root"></div>
+  <!-- Teks Loading Default (Akan hilang jika React berhasil jalan) -->
+  <div id="root" style="padding: 20px; font-family: sans-serif; text-align: center; color: #0f766e;">
+    <h2 class="animate-pulse">🕌 Sedang Memuat Aplikasi SIMANIS...</h2>
+    <p style="font-size: 12px; color: #666;">Jika tampilan ini tidak berubah, coba Refresh atau cek koneksi internet.</p>
+  </div>
   
   <!-- Script untuk menampilkan error di layar jika aplikasi gagal loading -->
   <script>
-    window.addEventListener('error', function(e) {
+    function showError(title, msg) {
       const root = document.getElementById('root');
-      if (root && root.innerHTML === '') {
-        root.innerHTML = '<div style="padding:20px; color:red; font-family:sans-serif;"><h3>Terjadi Kesalahan:</h3><p>' + e.message + '</p><p>Line: ' + e.lineno + '</p><button onclick="window.location.reload(true)" style="padding:10px; margin-top:10px;">Refresh Halaman</button></div>';
+      if (root) {
+        root.innerHTML = '<div style="padding:20px; color:red; font-family:sans-serif; background:#fff0f0; border:1px solid red; margin:20px; border-radius:8px;"><h3>⚠️ ' + title + '</h3><p>' + msg + '</p><button onclick="window.location.reload(true)" style="padding:10px; margin-top:10px; cursor:pointer;">Refresh Halaman</button></div>';
       }
+    }
+    window.addEventListener('error', function(e) {
+      showError('Terjadi Kesalahan Script', e.message + ' (Line: ' + e.lineno + ')');
     });
-  </script>
-
-  
-  <!-- Script untuk menampilkan error di layar jika aplikasi gagal loading -->
-  <script>
-    window.addEventListener('error', function(e) {
-      const root = document.getElementById('root');
-      if (root && root.innerHTML === '') {
-        root.innerHTML = '<div style="padding:20px; color:red; font-family:sans-serif;"><h3>Terjadi Kesalahan:</h3><p>' + e.message + '</p><p>Line: ' + e.lineno + '</p><button onclick="window.location.reload(true)" style="padding:10px; margin-top:10px;">Refresh Halaman</button></div>';
-      }
+    window.addEventListener('unhandledrejection', function(e) {
+      // Jangan tampilkan error Fetch (biasanya karena offline/widget shalat)
+      if (e.reason && e.reason.name === 'FetchError') return;
+      showError('Unhandled Promise Rejection', e.reason ? (e.reason.message || e.reason) : 'Unknown Error');
     });
   </script>
 
   <script type="text/babel">
 window.addEventListener('DOMContentLoaded', function() {
     const { useEffect, useMemo, useState, useRef } = React;
+
+    // Cek apakah React berhasil di-load
+    if (typeof React === 'undefined' || typeof ReactDOM === 'undefined') {
+      throw new Error("Library React gagal dimuat. Cek koneksi internet Anda.");
+    }
 
     const defaultRKT = [
       { id: 1, pilar: "Layanan KUA Prima", kegiatan: "Standardisasi Layanan KUA (Service Excellence)", target: "23 KUA", tw: "TW I", status: "Selesai", progress: 100 },
@@ -1237,12 +1243,17 @@ window.addEventListener('DOMContentLoaded', function() {
   </script>
 
   <script>
+    // Registrasi Service Worker dengan penanganan error
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
         navigator.serviceWorker
           .register('./service-worker.js')
+          .then(function(registration) {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          })
           .catch(function (err) {
             console.log('Service worker registration failed:', err);
+            // Jika gagal register, tidak masalah, aplikasi tetap jalan online
           });
       });
     }
