@@ -1,4 +1,4 @@
-const CACHE_NAME = 'simanis-cache-v8';
+const CACHE_NAME = 'simanis-cache-v11';
 const URLS_TO_CACHE = [
   './',
   './index.html',
