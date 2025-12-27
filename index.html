@@ -49,7 +49,6 @@
   </script>
 
   <script type="text/babel">
-window.addEventListener('DOMContentLoaded', function() {
     const { useEffect, useMemo, useState, useRef } = React;
 
     // Cek apakah React berhasil di-load
@@ -1239,7 +1238,6 @@ window.addEventListener('DOMContentLoaded', function() {
     } else {
       console.error("Error: Elemen <div id='root'> tidak ditemukan.");
     }
-});
   </script>
 
   <script>
@@ -1262,10 +1260,8 @@ window.addEventListener('DOMContentLoaded', function() {
     setTimeout(function() {
       const root = document.getElementById('root');
       if (root && root.innerText.includes('Sedang Memuat')) {
-        // Cek apakah Babel/React terload
-        if (typeof React === 'undefined' || typeof Babel === 'undefined') {
-           root.innerHTML = '<div style="padding:20px; color:red; font-family:sans-serif; text-align:center; background:#fff0f0; border:1px solid red; border-radius:8px; margin:20px;"><h3>⚠️ Gagal Memuat Resource</h3><p>Library aplikasi (React/Babel) tidak dapat dimuat. Pastikan koneksi internet stabil.</p><p style="font-size:12px; color:#666;">Service Worker mungkin gagal mengambil file eksternal.</p><button onclick="window.location.reload(true)" style="margin-top:10px; padding:8px 16px; cursor:pointer;">Muat Ulang</button></div>';
-        }
+        // Jika masih loading setelah 5 detik, anggap gagal (entah karena library atau script error)
+        root.innerHTML = '<div style="padding:20px; color:red; font-family:sans-serif; text-align:center; background:#fff0f0; border:1px solid red; border-radius:8px; margin:20px;"><h3>⚠️ Aplikasi Tidak Merespons</h3><p>Script aplikasi tidak berjalan. Ini biasanya terjadi karena koneksi lambat atau browser memblokir script.</p><button onclick="window.location.reload(true)" style="margin-top:10px; padding:8px 16px; cursor:pointer;">Muat Ulang</button></div>';
       }
     }, 5000);
   </script>
