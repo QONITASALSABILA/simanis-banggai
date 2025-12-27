@@ -222,6 +222,7 @@
               client
                 .from('marquee_text')
                 .select('text')
+                .order('id', { ascending: true })
                 .limit(1)
                 .then(({ data, error }) => {
                   if (data && data.length > 0 && data[0].text) {
@@ -234,6 +235,9 @@
            }
         }
       }, []);
+
+      // Sembunyikan marquee jika teks kosong (Fitur Hapus)
+      if (!text) return null;
 
       return (
         <div className="overflow-hidden whitespace-nowrap bg-emerald-50 border border-emerald-100 rounded-lg py-2 px-4 mb-6 relative">
@@ -344,6 +348,7 @@
       const [anonKey, setAnonKey] = useState(config?.anonKey || '');
       const [marqueeText, setMarqueeText] = useState('');
       const [marqueeMsg, setMarqueeMsg] = useState('');
+      const [marqueeId, setMarqueeId] = useState(1);
 
       useEffect(() => {
         setUrl(config?.url || '');
@@ -355,8 +360,14 @@
         if (session && config) {
            const client = createSupabaseClient(config);
            if(client) {
-               client.from('marquee_text').select('text').limit(1).maybeSingle()
-               .then(({ data }) => { if(data) setMarqueeText(data.text); });
+               // Ambil ID dan Text yang benar agar update tepat sasaran
+               client.from('marquee_text').select('id, text').order('id', { ascending: true }).limit(1).maybeSingle()
+               .then(({ data }) => { 
+                 if(data) {
+                   setMarqueeText(data.text);
+                   setMarqueeId(data.id);
+                 }
+               });
            }
         }
       }, [session, config]);
@@ -366,8 +377,8 @@
           const client = createSupabaseClient(config);
           if(!client) return;
           setMarqueeMsg('Menyimpan...');
-          // Upsert data (id: 1) agar selalu update baris pertama
-          const { error } = await client.from('marquee_text').upsert({ id: 1, text: marqueeText });
+          // Upsert data menggunakan ID yang benar (agar tidak duplikat)
+          const { error } = await client.from('marquee_text').upsert({ id: marqueeId, text: marqueeText });
           if(error) setMarqueeMsg('Gagal: ' + error.message);
           else {
             setMarqueeMsg('Berhasil disimpan! Halaman akan dimuat ulang...');
