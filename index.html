@@ -26,6 +26,24 @@
     window.supabase = { createClient };
     window.supabaseReady = true;
   </script>
+  <style>
+    /* Animasi Teks Berjalan (Marquee) */
+    @keyframes marquee {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    .animate-marquee {
+      display: inline-block;
+      white-space: nowrap;
+      animation: marquee 25s linear infinite;
+    }
+    .animate-marquee:hover {
+      animation-play-state: paused;
+    }
+    /* Animasi Fade In */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+  </style>
 </head>
 <body>
   <!-- Teks Loading Default (Akan hilang jika React berhasil jalan) -->

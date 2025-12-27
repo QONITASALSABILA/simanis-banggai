@@ -1,5 +1,4 @@
-const CACHE_NAME = 'simanis-cache-v21';
-const URLS_TO_CACHE = [
+const CACHE_NAME = 'simanis-cache-v2
   './',
   './index.html',
   './manifest.webmanifest',
