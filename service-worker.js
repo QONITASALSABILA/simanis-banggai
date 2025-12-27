@@ -1,7 +1,8 @@
-const CACHE_NAME = 'simanis-cache-v5';
+const CACHE_NAME = 'simanis-cache-v6';
 const URLS_TO_CACHE = [
   './',
   './index.html',
+  './manifest.webmanifest',
 ];
 
 self.addEventListener('install', (event) => {
@@ -28,10 +29,14 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    fetch(event.request).catch(() =>
-      caches.match(event.request).then((response) =>
-        response || (event.request.mode === 'navigate' ? caches.match('./index.html') : undefined)
-      )
-    )
+    fetch(event.request).catch(() => {
+      return caches.match(event.request).then((response) => {
+        if (response) return response;
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+        return new Response('', { status: 404, statusText: 'Not Found' });
+      });
+    })
   );
 });
