@@ -369,7 +369,10 @@
           // Upsert data (id: 1) agar selalu update baris pertama
           const { error } = await client.from('marquee_text').upsert({ id: 1, text: marqueeText });
           if(error) setMarqueeMsg('Gagal: ' + error.message);
-          else setMarqueeMsg('Berhasil disimpan! Teks akan berubah di halaman depan.');
+          else {
+            setMarqueeMsg('Berhasil disimpan! Halaman akan dimuat ulang...');
+            setTimeout(() => window.location.reload(), 1000);
+          }
       };
 
       return (
