@@ -349,6 +349,7 @@
       const [marqueeText, setMarqueeText] = useState('');
       const [marqueeMsg, setMarqueeMsg] = useState('');
       const [marqueeId, setMarqueeId] = useState(1);
+      const loadedRef = useRef(false);
 
       useEffect(() => {
         setUrl(config?.url || '');
@@ -357,7 +358,7 @@
 
       // Fetch marquee text saat login
       useEffect(() => {
-        if (session && config) {
+        if (session && config && !loadedRef.current) {
            const client = createSupabaseClient(config);
            if(client) {
                // Ambil ID dan Text yang benar agar update tepat sasaran
@@ -367,6 +368,7 @@
                    setMarqueeText(data.text);
                    setMarqueeId(data.id);
                  }
+                 loadedRef.current = true;
                });
            }
         }
@@ -422,7 +424,7 @@
                   </div>
                   <div className="space-y-3">
                     <label className="block text-sm font-medium text-slate-700">Edit Teks Berjalan (Marquee)</label>
-                    <textarea value={marqueeText} onChange={(e) => setMarqueeText(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500" rows={4} placeholder="Masukkan teks pengumuman..." />
+                    <textarea value={marqueeText || ''} onChange={(e) => setMarqueeText(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500" rows={4} placeholder="Masukkan teks pengumuman..." />
                     <div className="flex justify-between items-center">
                         <span className="text-xs text-slate-500">{marqueeMsg}</span>
                         <button onClick={handleSaveMarquee} className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium">Simpan Teks</button>
