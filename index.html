@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <!--
-  VERSI SIMANIS ONLINE (PWA)
+  VERSI SIMANIS ONLINE (PWA) - FIXED MARQUEE
   - Aplikasi: "SIMANIS Banggai - Sistem Manajemen Bimas Islam"
-  - Teknologi: React + Supabase + konfigurasi PWA (manifest & service worker)
-  - Rencana: Proyek lanjutan yang lebih mobile-first, belum menggantikan GEMILANG di GitHub
+  - Teknologi: React + Supabase + konfigurasi PWA
+  - Perbaikan: Teks berjalan (Marquee) memiliki fallback default agar selalu muncul.
 -->
 <html lang="id">
 <head>
@@ -35,11 +35,8 @@
     .animate-marquee {
       display: inline-block;
       white-space: nowrap;
-      animation: marquee 25s linear infinite;
-      /* Optimasi GPU untuk mencegah flicker */
-      will-change: transform;
-      backface-visibility: hidden;
-      transform: translateZ(0);
+      animation: marquee 20s linear infinite; /* Kecepatan disesuaikan agar enak dibaca */
+      padding-left: 100%; /* Memastikan start dari luar layar kanan */
     }
     .animate-marquee:hover {
       animation-play-state: paused;
@@ -50,13 +47,12 @@
   </style>
 </head>
 <body>
-  <!-- Teks Loading Default (Akan hilang jika React berhasil jalan) -->
+  <!-- Teks Loading Default -->
   <div id="root" style="padding: 20px; font-family: sans-serif; text-align: center; color: #0f766e;">
     <h2 class="animate-pulse">🕌 Sedang Memuat Aplikasi SIMANIS...</h2>
     <p style="font-size: 12px; color: #666;">Jika tampilan ini tidak berubah, coba Refresh atau cek koneksi internet.</p>
   </div>
   
-  <!-- Script untuk menampilkan error di layar jika aplikasi gagal loading -->
   <script>
     function showError(title, msg) {
       const root = document.getElementById('root');
@@ -68,14 +64,12 @@
       showError('Terjadi Kesalahan Script', e.message + ' (Line: ' + e.lineno + ')');
     });
     window.addEventListener('unhandledrejection', function(e) {
-      // Jangan tampilkan error Fetch (biasanya karena offline/widget shalat)
       if (e.reason && e.reason.name === 'FetchError') return;
       showError('Unhandled Promise Rejection', e.reason ? (e.reason.message || e.reason) : 'Unknown Error');
     });
   </script>
 
   <script type="text/babel">
-    // Tunggu sampai window.supabase tersedia
     function waitForSupabase(cb) {
       if (window.supabase && window.supabase.createClient) {
         cb();
@@ -87,7 +81,6 @@
     waitForSupabase(() => {
       const { useEffect, useMemo, useState, useRef } = React;
 
-      // Cek apakah React berhasil di-load
       if (typeof React === 'undefined' || typeof ReactDOM === 'undefined') {
         throw new Error("Library React gagal dimuat. Cek koneksi internet Anda.");
       }
@@ -108,7 +101,6 @@
       { id: 'k5', nama: "KUA Kec. Simpang Raya", kepala: "Ahmad Zaenal Ihrom, S.Th.I", status: "Prima", layanan: "Online" }
     ];
 
-    // --- DEFINISI IKON (Wajib ada agar tidak error) ---
     const Icons = {
         LayoutDashboard: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>,
         Users: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
@@ -129,7 +121,6 @@
     function getSupabaseConfig() {
       const raw = localStorage.getItem('simanis_supabase');
       const parsed = raw ? safeJsonParse(raw) : null;
-      // Ganti dengan URL dan anonKey Supabase Anda!
       const DEFAULT = {
         url: 'https://vazyleskmkbisbenmgpj.supabase.co',
         anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhenlsZXNrbWtiaXNiZW5tZ3BqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3NDM4MDcsImV4cCI6MjA4MjMxOTgwN30.IoOjBwBqN-ZufjBrvG7e_q0FZzZLSoBODWdJzwptOdY'
@@ -142,7 +133,6 @@
       localStorage.setItem('simanis_supabase', JSON.stringify({ url, anonKey }));
     }
 
-    // --- Pastikan supabase client global ---
     let supabase = null;
     function createSupabaseClient(config) {
       if (!config) return null;
@@ -150,7 +140,6 @@
       const { createClient } = window.supabase;
       return createClient(config.url, config.anonKey);
     }
-    // Inisialisasi supabase global (untuk guest/publik)
     if (!supabase) {
       const config = getSupabaseConfig();
       if (config && window.supabase) {
@@ -203,15 +192,57 @@
             </div>
           </div>
           <div className="flex-1 flex items-center overflow-hidden w-full bg-emerald-950/30 rounded-lg py-3 px-2 border border-emerald-500/20 backdrop-blur-sm relative">
-            <div className="animate-marquee w-full whitespace-nowrap">
-              {prayers.map((p, idx) => (
-                <span key={idx} className="inline-flex items-center mx-6 text-sm font-bold">
-                  <span className="mr-2">{p.icon}</span>
-                  <span className="text-emerald-200 mr-1">{p.name}:</span>
-                  <span className="text-white">{p.time}</span>
-                </span>
-              ))}
+            <div className="w-full overflow-hidden">
+               <div className="animate-marquee whitespace-nowrap">
+                {prayers.map((p, idx) => (
+                  <span key={idx} className="inline-flex items-center mx-6 text-sm font-bold">
+                    <span className="mr-2">{p.icon}</span>
+                    <span className="text-emerald-200 mr-1">{p.name}:</span>
+                    <span className="text-white">{p.time}</span>
+                  </span>
+                ))}
+               </div>
             </div>
+          </div>
+        </div>
+      );
+    };
+
+    // --- KOMPONEN MARQUEE YANG SUDAH DIPERBAIKI ---
+    const PublicMarquee = () => {
+      // Default text ditambahkan agar animasi selalu berjalan walaupun fetch gagal/belum setup
+      const defaultText = "Selamat Datang di Aplikasi SIMANIS Banggai - Sistem Manajemen Bimas Islam Terpadu. Akses Layanan KUA & Informasi Keagamaan dengan Mudah dan Cepat.";
+      const [text, setText] = useState(defaultText);
+      
+      useEffect(() => {
+        if (window.supabase) {
+           const config = getSupabaseConfig();
+           if(config && config.url && config.anonKey) {
+              const client = window.supabase.createClient(config.url, config.anonKey);
+              client
+                .from('marquee_text')
+                .select('text')
+                .limit(1)
+                .then(({ data, error }) => {
+                  if (data && data.length > 0 && data[0].text) {
+                     setText(data[0].text);
+                  }
+                })
+                .catch(err => {
+                   console.log("Marquee fetch error, using default text");
+                });
+           }
+        }
+      }, []);
+
+      return (
+        <div className="overflow-hidden whitespace-nowrap bg-emerald-50 border border-emerald-100 rounded-lg py-2 px-4 mb-6 relative">
+          <div className="w-full overflow-hidden">
+             <div className="animate-marquee">
+                <span className="text-emerald-700 font-medium text-sm md:text-base">
+                  {text}
+                </span>
+             </div>
           </div>
         </div>
       );
@@ -228,41 +259,20 @@
       return <span className={`px-2 py-1 rounded-full text-xs font-bold ${cls}`}>{children}</span>;
     };
 
-    const PublicMarquee = () => {
-      const [text, setText] = React.useState('');
-      React.useEffect(() => {
-        if (window.supabase) {
-          window.supabase
-            .createClient(getSupabaseConfig().url, getSupabaseConfig().anonKey)
-            .from('marquee_text')
-            .select('text')
-            .limit(1)
-            .then(({ data, error }) => {
-              if (data && data.length > 0) setText(data[0].text);
-            });
-        }
-      }, []);
-      return (
-        <div className="overflow-hidden whitespace-nowrap bg-emerald-50 border border-emerald-100 rounded-lg py-2 px-4 mb-6">
-          <span className="animate-marquee text-emerald-700 font-medium">
-            {text || '...'}
-          </span>
-        </div>
-      );
-    };
-
-    // Layout utama aplikasi
     const Layout = ({ children, activeTab, onTabChange, session, onLogout, onResetData, loading, dataError }) => (
         <div className="min-h-screen">
           <div className="bg-gradient-to-br from-emerald-700 to-emerald-900 relative z-50">
             <div className="max-w-6xl mx-auto px-4 py-6">
-              <div className="max-w-6xl mx-auto px-4">
-                <PublicMarquee />
+              
+              <div className="max-w-6xl mx-auto px-4 mb-4">
+                 {/* Marquee hanya dipanggil di sini satu kali */}
+                 <PublicMarquee />
               </div>
+
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <h1 className="text-white font-bold text-xl">SIMANIS Banggai</h1>
-                  <p className="text-emerald-100 text-sm opacity-90">Sistem Manajemen Bimas Islam (Mode Online + Supabase)</p>
+                  <p className="text-emerald-100 text-sm opacity-90">Sistem Manajemen Bimas Islam</p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   {session ? (
@@ -328,14 +338,39 @@
       onSubmitAuth,
       onSaveConfig,
       onClearConfig,
+      session
     }) => {
       const [url, setUrl] = useState(config?.url || '');
       const [anonKey, setAnonKey] = useState(config?.anonKey || '');
+      const [marqueeText, setMarqueeText] = useState('');
+      const [marqueeMsg, setMarqueeMsg] = useState('');
 
       useEffect(() => {
         setUrl(config?.url || '');
         setAnonKey(config?.anonKey || '');
       }, [config?.url, config?.anonKey]);
+
+      // Fetch marquee text saat login
+      useEffect(() => {
+        if (session && config) {
+           const client = createSupabaseClient(config);
+           if(client) {
+               client.from('marquee_text').select('text').limit(1).maybeSingle()
+               .then(({ data }) => { if(data) setMarqueeText(data.text); });
+           }
+        }
+      }, [session, config]);
+
+      const handleSaveMarquee = async () => {
+          if(!config) return;
+          const client = createSupabaseClient(config);
+          if(!client) return;
+          setMarqueeMsg('Menyimpan...');
+          // Upsert data (id: 1) agar selalu update baris pertama
+          const { error } = await client.from('marquee_text').upsert({ id: 1, text: marqueeText });
+          if(error) setMarqueeMsg('Gagal: ' + error.message);
+          else setMarqueeMsg('Berhasil disimpan! Teks akan berubah di halaman depan.');
+      };
 
       return (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
@@ -361,16 +396,29 @@
                     Hapus
                   </button>
                 </div>
-
-                <div className="text-xs text-slate-500">
-                  Catatan: key ini tersimpan di browser (localStorage). Untuk production, ini normal untuk Supabase (anon key), asalkan RLS aktif.
-                </div>
               </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-              <h2 className="font-bold text-slate-800">Login / Register</h2>
-              {!config ? (
+              {session ? (
+                <>
+                  <h2 className="font-bold text-slate-800 mb-4">Pengaturan Admin</h2>
+                  <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm mb-4">
+                    Login sebagai: <b>{session.user.email}</b>
+                  </div>
+                  <div className="space-y-3">
+                    <label className="block text-sm font-medium text-slate-700">Edit Teks Berjalan (Marquee)</label>
+                    <textarea value={marqueeText} onChange={(e) => setMarqueeText(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500" rows={4} placeholder="Masukkan teks pengumuman..." />
+                    <div className="flex justify-between items-center">
+                        <span className="text-xs text-slate-500">{marqueeMsg}</span>
+                        <button onClick={handleSaveMarquee} className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium">Simpan Teks</button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2 className="font-bold text-slate-800">Login / Register</h2>
+                  {!config ? (
                 <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-sm">
                   Isi konfigurasi Supabase dulu.
                 </div>
@@ -419,11 +467,9 @@
                 <button type="submit" className="w-full px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium disabled:opacity-50" disabled={!config || loading}>
                   {authMode === 'login' ? 'Login' : 'Register'}
                 </button>
-
-                <div className="text-xs text-slate-500">
-                  Jika register gagal karena perlu verifikasi email, matikan “Confirm email” di Supabase Auth Settings untuk testing.
-                </div>
               </form>
+                </>
+              )}
             </div>
           </div>
         );
@@ -431,29 +477,21 @@
 
     const SIMANISApp = () => {
       const [activeTab, setActiveTab] = useState('dashboard');
-
       const [config, setConfigState] = useState(() => getSupabaseConfig());
       const supabase = useMemo(() => createSupabaseClient(config), [config]);
-
       const [authMode, setAuthMode] = useState('login');
       const [authError, setAuthError] = useState('');
       const [authSuccess, setAuthSuccess] = useState('');
-
       const emailRef = useRef(null);
       const passwordRef = useRef(null);
-
       const [session, setSession] = useState(null);
       const userId = session?.user?.id ?? null;
-
       const [loading, setLoading] = useState(false);
       const [dataError, setDataError] = useState('');
-
       const [rktData, setRktData] = useState([]);
       const [kuaData, setKuaData] = useState([]);
-
       const [editRktId, setEditRktId] = useState(null);
       const [editKuaId, setEditKuaId] = useState(null);
-
       const [searchKua, setSearchKua] = useState('');
       const [searchRkt, setSearchRkt] = useState('');
       const [filterPilar, setFilterPilar] = useState('all');
@@ -463,7 +501,6 @@
       useEffect(() => {
         if (!supabase) return;
         let unsub = null;
-
         const init = async () => {
           try {
             const { data } = await supabase.auth.getSession();
@@ -476,71 +513,39 @@
             console.error("Auth init error:", e);
           }
         };
-
         init();
         return () => { if (unsub) unsub.unsubscribe(); };
       }, [supabase]);
 
       const seedIfEmpty = async () => {
         if (!supabase || !userId) return;
-
-        const { data: rktExisting, error: rktErr } = await supabase
-          .from('rkt_items')
-          .select('id')
-          .eq('user_id', userId)
-          .limit(1);
+        const { data: rktExisting, error: rktErr } = await supabase.from('rkt_items').select('id').eq('user_id', userId).limit(1);
         if (rktErr) throw rktErr;
-
-        const { data: kuaExisting, error: kuaErr } = await supabase
-          .from('kua_items')
-          .select('id')
-          .eq('user_id', userId)
-          .limit(1);
+        const { data: kuaExisting, error: kuaErr } = await supabase.from('kua_items').select('id').eq('user_id', userId).limit(1);
         if (kuaErr) throw kuaErr;
 
         if (!rktExisting || rktExisting.length === 0) {
-          const payload = defaultRKT.map((x) => ({
-            user_id: userId,
-            pilar: x.pilar,
-            kegiatan: x.kegiatan,
-            target: x.target,
-            tw: x.tw,
-            status: x.status,
-            progress: Number(x.progress) || 0,
-          }));
-          const { error } = await supabase.from('rkt_items').insert(payload);
-          if (error) throw error;
+          const payload = defaultRKT.map((x) => ({ user_id: userId, pilar: x.pilar, kegiatan: x.kegiatan, target: x.target, tw: x.tw, status: x.status, progress: Number(x.progress) || 0 }));
+          await supabase.from('rkt_items').insert(payload);
         }
-
         if (!kuaExisting || kuaExisting.length === 0) {
-          const payload = defaultKUA.map((x) => ({
-            user_id: userId,
-            nama: x.nama,
-            kepala: x.kepala,
-            status: x.status,
-            layanan: x.layanan,
-          }));
-          const { error } = await supabase.from('kua_items').insert(payload);
-          if (error) throw error;
+          const payload = defaultKUA.map((x) => ({ user_id: userId, nama: x.nama, kepala: x.kepala, status: x.status, layanan: x.layanan }));
+          await supabase.from('kua_items').insert(payload);
         }
       };
 
       const loadData = async () => {
         if (!supabase || !userId) return;
-
         setLoading(true);
         setDataError('');
         try {
           await seedIfEmpty();
-
           const [{ data: rkt, error: rktErr }, { data: kua, error: kuaErr }] = await Promise.all([
             supabase.from('rkt_items').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
             supabase.from('kua_items').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
           ]);
-
           if (rktErr) throw rktErr;
           if (kuaErr) throw kuaErr;
-
           setRktData(rkt || []);
           setKuaData(kua || []);
         } catch (e) {
@@ -577,13 +582,10 @@
 
       const handleAuth = async (e) => {
         e.preventDefault();
-        
-        // Cek apakah library Supabase berhasil dimuat
         if (!window.supabase || !supabase) {
-          setAuthError("Gagal terhubung ke sistem database (Library Supabase belum dimuat). Mohon Refresh halaman dan pastikan koneksi internet stabil.");
+          setAuthError("Gagal terhubung ke sistem database.");
           return;
         }
-        
         setAuthError('');
         setAuthSuccess('');
         const email = (emailRef.current?.value || '').trim();
@@ -599,46 +601,17 @@
             const { data, error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) throw error;
             if (data?.session) {
-              setAuthSuccess('Login berhasil. Anda sekarang sudah masuk.');
-            } else {
-              setAuthSuccess('Login berhasil, menunggu sesi aktif dari Supabase.');
+              setAuthSuccess('Login berhasil.');
             }
           } else {
-            const { data, error } = await supabase.auth.signUp({
-              email,
-              password,
-              options: {
-                // Pastikan link konfirmasi kembali ke aplikasi ini (Netlify / domain saat ini)
-                emailRedirectTo: window.location.origin,
-              },
-            });
+            const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
             if (error) throw error;
-
-            const needsEmailConfirm = !data?.session;
-            setAuthSuccess(needsEmailConfirm
-              ? 'Registrasi berhasil. Jika "Confirm email" masih aktif di Supabase, silakan cek email untuk verifikasi sebelum login.'
-              : 'Registrasi berhasil. Anda bisa langsung login dengan akun ini.'
-            );
+            setAuthSuccess('Registrasi berhasil. Cek email jika perlu verifikasi.');
             setAuthMode('login');
           }
           if (passwordRef.current) passwordRef.current.value = '';
         } catch (e2) {
-          const rawMsg = e2?.message || String(e2);
-          const lower = rawMsg.toLowerCase();
-
-          if (lower.includes('email not confirmed') || lower.includes('email_not_confirmed')) {
-            setAuthError('Email belum dikonfirmasi. Silakan cek inbox email Anda dan klik link verifikasi dari Supabase. Jika untuk uji coba, Anda bisa mematikan opsi "Confirm email" di Authentication → Providers → Email. Kami juga sudah mengirim ulang email konfirmasi (jika memungkinkan).');
-            // Coba kirim ulang email konfirmasi tanpa mengganggu alur utama
-            if (supabase && email) {
-              supabase.auth.resend({ type: 'signup', email }).catch(() => {});
-            }
-          } else if (lower.includes('invalid login credentials')) {
-            setAuthError('Email atau password salah. Periksa kembali dan coba lagi.');
-          } else if (lower.includes('user already registered')) {
-            setAuthError('Email sudah terdaftar. Silakan login, atau gunakan fitur lupa password di Supabase untuk reset password.');
-          } else {
-            setAuthError(rawMsg);
-          }
+          setAuthError(e2?.message || String(e2));
         } finally {
           setLoading(false);
         }
@@ -649,65 +622,35 @@
         await supabase.auth.signOut();
       };
 
-      const updateRktLocal = (id, field, value) => {
-        setRktData((prev) => prev.map((x) => (x.id === id ? { ...x, [field]: value } : x)));
-      };
-
-      const updateKuaLocal = (id, field, value) => {
-        setKuaData((prev) => prev.map((x) => (x.id === id ? { ...x, [field]: value } : x)));
-      };
+      const updateRktLocal = (id, field, value) => setRktData((prev) => prev.map((x) => (x.id === id ? { ...x, [field]: value } : x)));
+      const updateKuaLocal = (id, field, value) => setKuaData((prev) => prev.map((x) => (x.id === id ? { ...x, [field]: value } : x)));
 
       const persistRktRow = async (row) => {
         if (!supabase) return;
-        const payload = {
-          pilar: row.pilar,
-          kegiatan: row.kegiatan,
-          target: row.target,
-          tw: row.tw,
-          status: row.status,
-          progress: Number(row.progress) || 0,
-          updated_at: new Date().toISOString(),
-        };
+        const payload = { ...row, updated_at: new Date().toISOString() };
+        delete payload.id; delete payload.created_at; delete payload.user_id; // prevent update system fields
         const { error } = await supabase.from('rkt_items').update(payload).eq('id', row.id).eq('user_id', userId);
         if (error) throw error;
       };
 
       const persistKuaRow = async (row) => {
         if (!supabase) return;
-        const payload = {
-          nama: row.nama,
-          kepala: row.kepala,
-          status: row.status,
-          layanan: row.layanan,
-          updated_at: new Date().toISOString(),
-        };
+        const payload = { ...row, updated_at: new Date().toISOString() };
+        delete payload.id; delete payload.created_at; delete payload.user_id;
         const { error } = await supabase.from('kua_items').update(payload).eq('id', row.id).eq('user_id', userId);
         if (error) throw error;
       };
 
       const handleAddKua = async () => {
         if (!supabase || !userId) return;
-
         setLoading(true);
-        setDataError('');
         try {
-          const { data, error } = await supabase
-            .from('kua_items')
-            .insert({
-              user_id: userId,
-              nama: 'KUA Baru',
-              kepala: '',
-              status: 'Manual',
-              layanan: 'Manual',
-            })
-            .select('*')
-            .single();
-
+          const { data, error } = await supabase.from('kua_items').insert({ user_id: userId, nama: 'KUA Baru', kepala: '', status: 'Manual', layanan: 'Manual' }).select('*').single();
           if (error) throw error;
           setKuaData((prev) => [...prev, data]);
           setEditKuaId(data.id);
         } catch (e) {
-          setDataError(e?.message || String(e));
+          setDataError(e.message);
         } finally {
           setLoading(false);
         }
@@ -715,70 +658,38 @@
 
       const handleResetData = async () => {
         if (!supabase || !userId) return;
-        if (!confirm('Apakah Anda yakin ingin mereset semua data ke kondisi awal?')) return;
-
+        if (!confirm('Yakin reset data?')) return;
         setLoading(true);
-        setDataError('');
         try {
-          const [{ error: delRkt }, { error: delKua }] = await Promise.all([
-            supabase.from('rkt_items').delete().eq('user_id', userId),
-            supabase.from('kua_items').delete().eq('user_id', userId),
-          ]);
-          if (delRkt) throw delRkt;
-          if (delKua) throw delKua;
-
+          await supabase.from('rkt_items').delete().eq('user_id', userId);
+          await supabase.from('kua_items').delete().eq('user_id', userId);
           await seedIfEmpty();
           await loadData();
-          alert('Data berhasil direset!');
+          alert('Reset berhasil.');
         } catch (e) {
-          setDataError(e?.message || String(e));
+          setDataError(e.message);
         } finally {
           setLoading(false);
         }
       };
 
-      const stats = useMemo(() => {
-        const totalRkt = rktData.length;
-        const onlineKua = kuaData.filter((k) => (k.layanan || '').toLowerCase() === 'online').length;
-        return { totalRkt, onlineKua };
-      }, [rktData, kuaData]);
-
-      const pilarOptions = useMemo(() => {
-        const set = new Set();
-        (rktData || []).forEach((x) => {
-          if (x.pilar) set.add(x.pilar);
-        });
-        return Array.from(set);
-      }, [rktData]);
-
+      const stats = useMemo(() => ({ totalRkt: rktData.length, onlineKua: kuaData.filter((k) => (k.layanan || '').toLowerCase() === 'online').length }), [rktData, kuaData]);
+      const pilarOptions = useMemo(() => Array.from(new Set(rktData.map(x => x.pilar))), [rktData]);
       const filteredRkt = useMemo(() => {
         const q = searchRkt.trim().toLowerCase();
-        return (rktData || []).filter((item) => {
+        return rktData.filter((item) => {
           if (filterPilar !== 'all' && item.pilar !== filterPilar) return false;
-          const statusValue = item.status || 'Belum';
-          if (filterStatus !== 'all' && statusValue !== filterStatus) return false;
-          if (filterTw !== 'all') {
-            const twVal = (item.tw || '').toLowerCase();
-            if (!twVal.includes(filterTw.toLowerCase())) return false;
-          }
+          if (filterStatus !== 'all' && (item.status || 'Belum') !== filterStatus) return false;
+          if (filterTw !== 'all' && !(item.tw || '').toLowerCase().includes(filterTw.toLowerCase())) return false;
           if (!q) return true;
-          return (
-            (item.kegiatan || '').toLowerCase().includes(q) ||
-            (item.target || '').toLowerCase().includes(q) ||
-            (item.pilar || '').toLowerCase().includes(q)
-          );
+          return (item.kegiatan + item.target + item.pilar).toLowerCase().includes(q);
         });
       }, [rktData, searchRkt, filterPilar, filterStatus, filterTw]);
 
       const filteredKua = useMemo(() => {
         const q = searchKua.trim().toLowerCase();
         if (!q) return kuaData;
-        return kuaData.filter((k) =>
-          (k.nama || '').toLowerCase().includes(q) ||
-          (k.kepala || '').toLowerCase().includes(q) ||
-          (k.status || '').toLowerCase().includes(q) ||
-          (k.layanan || '').toLowerCase().includes(q)
-        );
+        return kuaData.filter((k) => (k.nama + k.kepala + k.status + k.layanan).toLowerCase().includes(q));
       }, [kuaData, searchKua]);
 
       const DashboardView = () => (
@@ -787,73 +698,28 @@
             <PrayerWidget />
             <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
-                <div>
-                  <p className="text-slate-500 text-sm">Program Unggulan</p>
-                  <h3 className="text-2xl font-bold text-slate-800">{stats.totalRkt}</h3>
-                </div>
+                <div><p className="text-slate-500 text-sm">Program Unggulan</p><h3 className="text-2xl font-bold text-slate-800">{stats.totalRkt}</h3></div>
                 <div className="bg-emerald-100 p-3 rounded-lg text-emerald-600"><FileText width={20} height={20} /></div>
               </div>
               <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
-                <div>
-                  <p className="text-slate-500 text-sm">KUA Online</p>
-                  <h3 className="text-2xl font-bold text-slate-800">{stats.onlineKua}</h3>
-                </div>
+                <div><p className="text-slate-500 text-sm">KUA Online</p><h3 className="text-2xl font-bold text-slate-800">{stats.onlineKua}</h3></div>
                 <div className="bg-blue-100 p-3 rounded-lg text-blue-600"><Users width={20} height={20} /></div>
               </div>
               <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
-                <div>
-                  <p className="text-slate-500 text-sm">Peristiwa Nikah</p>
-                  <h3 className="text-2xl font-bold text-slate-800">1,450+</h3>
-                </div>
+                <div><p className="text-slate-500 text-sm">Peristiwa Nikah</p><h3 className="text-2xl font-bold text-slate-800">1,450+</h3></div>
                 <div className="bg-amber-100 p-3 rounded-lg text-amber-700"><LayoutDashboard width={20} height={20} /></div>
               </div>
-
               <div className="sm:col-span-3 bg-white border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="bg-emerald-50 p-2 rounded-full"><Settings className="text-emerald-600" width={18} height={18} /></div>
-                  <span className="font-bold text-slate-700 text-sm">Status koneksi:</span>
-                </div>
-                <div className="flex gap-2 flex-wrap justify-center md:justify-end w-full">
-                  <span className={`px-3 py-2 rounded-lg text-xs font-medium border ${config ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-700 border-slate-200'}`}>
-                    Supabase: {config ? 'Terpasang' : 'Belum di-set'}
-                  </span>
-                  <span className={`px-3 py-2 rounded-lg text-xs font-medium border ${session ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-slate-50 text-slate-700 border-slate-200'}`}>
-                    Login: {session ? 'Aktif' : 'Belum'}
-                  </span>
-                  {session ? (
-                    <button onClick={loadData} className="px-3 py-2 rounded-lg text-xs font-medium border bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
-                      Refresh Data
-                    </button>
-                  ) : null}
-                </div>
+                <div className="flex items-center gap-3"><div className="bg-emerald-50 p-2 rounded-full"><Settings className="text-emerald-600" width={18} height={18} /></div><span className="font-bold text-slate-700 text-sm">Status: {config ? 'Terpasang' : 'Belum'}, {session ? 'Login' : 'Guest'}</span></div>
+                {session && <button onClick={loadData} className="px-3 py-2 rounded-lg text-xs font-medium border bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">Refresh Data</button>}
               </div>
             </div>
           </div>
-
-          {!session ? (
-            <div className="p-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-sm">
-              Untuk menyimpan data terpusat, buka tab <b>Supabase</b>, isi konfigurasi, lalu login.
-            </div>
-          ) : null}
-
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold text-slate-800">Progres Program Prioritas</h3>
-              <button onClick={() => setActiveTab('rkt')} className="text-xs text-emerald-600 font-medium hover:underline">Lihat Semua</button>
-            </div>
-            <div className="space-y-5">
-              {(rktData || []).slice(0, 6).map((item) => (
-                <div key={item.id}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="font-medium text-slate-700">{item.kegiatan}</span>
-                    <span className="font-bold text-emerald-600">{Number(item.progress) || 0}%</span>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2">
-                    <div className="bg-emerald-500 h-2 rounded-full transition-all duration-700" style={{ width: `${Number(item.progress) || 0}%` }}></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <div className="flex justify-between items-center mb-6"><h3 className="font-bold text-slate-800">Progres Program Prioritas</h3><button onClick={() => setActiveTab('rkt')} className="text-xs text-emerald-600 font-medium hover:underline">Lihat Semua</button></div>
+            <div className="space-y-5">{(rktData || []).slice(0, 6).map((item) => (
+              <div key={item.id}><div className="flex justify-between text-sm mb-1"><span className="font-medium text-slate-700">{item.kegiatan}</span><span className="font-bold text-emerald-600">{Number(item.progress) || 0}%</span></div><div className="w-full bg-slate-100 rounded-full h-2"><div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${Number(item.progress) || 0}%` }}></div></div></div>
+            ))}</div>
           </div>
         </div>
       );
@@ -861,317 +727,73 @@
       const RKTView = () => (
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden animate-fade-in">
           <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <h2 className="font-bold text-lg text-slate-800">Manajemen RKT (Online)</h2>
-              <p className="text-sm text-slate-500">Gunakan filter di bawah untuk menyaring program RKT.</p>
-            </div>
-            {session ? (
-              <button onClick={loadData} className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium">
-                Refresh
-              </button>
-            ) : null}
+            <div><h2 className="font-bold text-lg text-slate-800">Manajemen RKT (Online)</h2><p className="text-sm text-slate-500">Gunakan filter di bawah untuk menyaring program RKT.</p></div>
+            {session && <button onClick={loadData} className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium">Refresh</button>}
           </div>
-
-          {!session ? (
-            <div className="p-6">
-              <div className="p-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-sm">
-                Kamu belum login. Buka tab <b>Supabase</b> untuk login.
-              </div>
-            </div>
-          ) : (
+          {!session ? <div className="p-6"><div className="p-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-sm">Login diperlukan.</div></div> : (
             <div className="p-4 pt-3">
               <div className="mb-4 grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Cari Kegiatan / Target</label>
-                  <input
-                    type="text"
-                    value={searchRkt}
-                    onChange={(e) => setSearchRkt(e.target.value)}
-                    placeholder="Ketik kata kunci..."
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Pilar</label>
-                  <select
-                    value={filterPilar}
-                    onChange={(e) => setFilterPilar(e.target.value)}
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500"
-                  >
-                    <option value="all">Semua Pilar</option>
-                    {pilarOptions.map((p) => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Status</label>
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500"
-                  >
-                    <option value="all">Semua Status</option>
-                    <option value="Belum">Belum</option>
-                    <option value="Proses">Proses</option>
-                    <option value="Selesai">Selesai</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Triwulan (TW)</label>
-                  <select
-                    value={filterTw}
-                    onChange={(e) => setFilterTw(e.target.value)}
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500"
-                  >
-                    <option value="all">Semua TW</option>
-                    <option value="tw i">TW I</option>
-                    <option value="tw ii">TW II</option>
-                    <option value="tw iii">TW III</option>
-                    <option value="tw iv">TW IV</option>
-                  </select>
-                </div>
+                <input type="text" value={searchRkt} onChange={(e) => setSearchRkt(e.target.value)} placeholder="Cari..." className="border rounded-lg px-3 py-2 text-sm" />
+                <select value={filterPilar} onChange={(e) => setFilterPilar(e.target.value)} className="border rounded-lg px-3 py-2 text-sm"><option value="all">Semua Pilar</option>{pilarOptions.map(p => <option key={p} value={p}>{p}</option>)}</select>
+                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="border rounded-lg px-3 py-2 text-sm"><option value="all">Semua Status</option><option value="Belum">Belum</option><option value="Proses">Proses</option><option value="Selesai">Selesai</option></select>
+                <select value={filterTw} onChange={(e) => setFilterTw(e.target.value)} className="border rounded-lg px-3 py-2 text-sm"><option value="all">Semua TW</option><option value="tw i">TW I</option><option value="tw ii">TW II</option><option value="tw iii">TW III</option><option value="tw iv">TW IV</option></select>
               </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50 text-slate-500 border-b border-slate-200 font-medium">
-                    <tr>
-                      <th className="px-6 py-4">Kegiatan</th>
-                      <th className="px-6 py-4">Target</th>
-                      <th className="px-6 py-4">Status</th>
-                      <th className="px-6 py-4">Progres</th>
-                      <th className="px-6 py-4">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredRkt.map((item) => (
-                    <tr key={item.id} className={editRktId === item.id ? "bg-amber-50" : "hover:bg-slate-50"}>
-                      <td className="px-6 py-4">
-                        <span className="text-xs font-bold text-emerald-600 block mb-1">{item.pilar}</span>
-                        <span className="text-slate-800 font-medium">{item.kegiatan}</span>
-                        <div className="text-xs text-slate-500 mt-1">TW: {item.tw || '-'}</div>
-                      </td>
-                      <td className="px-6 py-4 text-slate-600">{item.target}</td>
-                      <td className="px-6 py-4">
-                        {editRktId === item.id ? (
-                          <select className="border rounded p-1 text-xs" value={item.status || ''} onChange={(e) => updateRktLocal(item.id, 'status', e.target.value)}>
-                            <option value="Belum">Belum</option>
-                            <option value="Proses">Proses</option>
-                            <option value="Selesai">Selesai</option>
-                          </select>
-                        ) : (
-                          <Pill variant={item.status === 'Selesai' ? 'green' : item.status === 'Proses' ? 'blue' : 'slate'}>{item.status || 'Belum'}</Pill>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 w-56">
-                        {editRktId === item.id ? (
-                          <div className="flex gap-2 items-center">
-                            <input type="range" className="w-32" min={0} max={100} value={Number(item.progress) || 0} onChange={(e) => updateRktLocal(item.id, 'progress', Number(e.target.value))} />
-                            <span className="text-xs font-bold">{Number(item.progress) || 0}%</span>
-                          </div>
-                        ) : (
-                          <div className="w-full bg-slate-200 rounded-full h-2">
-                            <div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${Number(item.progress) || 0}%` }}></div>
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={async () => {
-                            if (editRktId === item.id) {
-                              try {
-                                setLoading(true);
-                                await persistRktRow(item);
-                                setEditRktId(null);
-                              } catch (e) {
-                                setDataError(e?.message || String(e));
-                              } finally {
-                                setLoading(false);
-                              }
-                            } else {
-                              setEditRktId(item.id);
-                            }
-                          }}
-                          className="p-2 rounded hover:bg-slate-100 text-slate-500 hover:text-emerald-600"
-                          title={editRktId === item.id ? 'Simpan' : 'Edit'}
-                        >
-                          {editRktId === item.id ? <Save width={16} height={16} /> : <Edit2 width={16} height={16} />}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                    {filteredRkt.length === 0 && (
-                      <tr>
-                        <td colSpan="5" className="px-6 py-6 text-center text-xs text-slate-500">
-                          Tidak ada data RKT yang cocok dengan filter saat ini.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              <div className="overflow-x-auto"><table className="w-full text-sm text-left"><thead className="bg-slate-50 text-slate-500 border-b border-slate-200 font-medium"><tr><th className="px-6 py-4">Kegiatan</th><th className="px-6 py-4">Target</th><th className="px-6 py-4">Status</th><th className="px-6 py-4">Progres</th><th className="px-6 py-4">Aksi</th></tr></thead><tbody className="divide-y divide-slate-100">
+                {filteredRkt.map((item) => (
+                  <tr key={item.id} className={editRktId === item.id ? "bg-amber-50" : "hover:bg-slate-50"}>
+                    <td className="px-6 py-4"><span className="text-xs font-bold text-emerald-600 block mb-1">{item.pilar}</span><span className="text-slate-800 font-medium">{item.kegiatan}</span></td>
+                    <td className="px-6 py-4 text-slate-600">{item.target}</td>
+                    <td className="px-6 py-4">{editRktId === item.id ? <select className="border rounded p-1 text-xs" value={item.status || ''} onChange={(e) => updateRktLocal(item.id, 'status', e.target.value)}><option value="Belum">Belum</option><option value="Proses">Proses</option><option value="Selesai">Selesai</option></select> : <Pill variant={item.status === 'Selesai' ? 'green' : item.status === 'Proses' ? 'blue' : 'slate'}>{item.status}</Pill>}</td>
+                    <td className="px-6 py-4 w-56">{editRktId === item.id ? <div className="flex gap-2 items-center"><input type="range" className="w-32" min={0} max={100} value={Number(item.progress) || 0} onChange={(e) => updateRktLocal(item.id, 'progress', Number(e.target.value))} /><span className="text-xs font-bold">{Number(item.progress)}%</span></div> : <div className="w-full bg-slate-200 rounded-full h-2"><div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${Number(item.progress)}%` }}></div></div>}</td>
+                    <td className="px-6 py-4"><button onClick={async () => { if (editRktId === item.id) { await persistRktRow(item); setEditRktId(null); } else { setEditRktId(item.id); } }} className="p-2 rounded hover:bg-slate-100 text-slate-500 hover:text-emerald-600">{editRktId === item.id ? <Save width={16} height={16} /> : <Edit2 width={16} height={16} />}</button></td>
+                  </tr>
+                ))}
+              </tbody></table></div>
             </div>
           )}
         </div>
       );
 
-      const Trash = (props) => (
-        <svg {...props} xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-      );
-
       const KUAView = () => {
-        // ...existing code...
-        const handleDeleteKua = async (kua) => {
-          if (!window.confirm(`Yakin ingin menghapus data "${kua.nama}"?`)) return;
-          try {
-            setLoading(true);
-            const { error } = await supabase.from('kua_items').delete().eq('id', kua.id);
-            if (error) throw error;
-            await loadData();
-          } catch (e) {
-            setDataError(e?.message || String(e));
-          } finally {
-            setLoading(false);
-          }
-        };
-
+        const handleDeleteKua = async (kua) => { if (confirm(`Hapus ${kua.nama}?`)) { setLoading(true); await supabase.from('kua_items').delete().eq('id', kua.id); await loadData(); setLoading(false); } };
         return (
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden animate-fade-in">
             <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-              <div>
-                <h2 className="font-bold text-lg text-slate-800">Database KUA Kecamatan (Online)</h2>
-                <p className="text-sm text-slate-500">Data tersimpan per-user di Supabase.</p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                <input
-                  value={searchKua}
-                  onChange={(e) => setSearchKua(e.target.value)}
-                  type="text"
-                  placeholder="Cari KUA..."
-                  className="w-full md:w-72 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500"
-                />
-                {session ? (
-                  <div className="flex gap-2">
-                    <button onClick={loadData} className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium">Refresh</button>
-                    <button onClick={handleAddKua} className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium">Tambah KUA</button>
-                  </div>
-                ) : null}
-              </div>
+              <div><h2 className="font-bold text-lg text-slate-800">Database KUA Kecamatan</h2><p className="text-sm text-slate-500">Data tersimpan per-user.</p></div>
+              <div className="flex gap-2 w-full md:w-auto"><input value={searchKua} onChange={(e) => setSearchKua(e.target.value)} placeholder="Cari KUA..." className="w-full md:w-72 border rounded-lg px-3 py-2 text-sm" />{session && <><button onClick={loadData} className="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-medium">Refresh</button><button onClick={handleAddKua} className="px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium">Tambah</button></>}</div>
             </div>
-
-            {!session ? (
-              <div className="p-6">
-                <div className="p-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-sm">
-                  Kamu belum login. Buka tab <b>Supabase</b> untuk login.
-                </div>
-              </div>
-            ) : (
-              <div className="p-6">
-                {filteredKua.length === 0 ? (
-                  <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-sm mb-4">
-                    Belum ada data KUA untuk akun ini. Gunakan tombol <b>Tambah KUA</b> untuk menambahkan entri baru.
-                  </div>
-                ) : null}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredKua.map((kua) => (
-                  <div key={kua.id} className={`rounded-xl border shadow-sm p-5 ${editKuaId === kua.id ? 'border-amber-200 bg-amber-50/50' : 'border-slate-100 bg-white'}`}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        {editKuaId === kua.id ? (
-                          <input value={kua.nama || ''} onChange={(e) => updateKuaLocal(kua.id, 'nama', e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500" />
-                        ) : (
-                          <h3 className="font-bold text-slate-800 truncate">{kua.nama}</h3>
-                        )}
-                        <div className="mt-2 text-sm text-slate-600">
-                          <div className="text-xs text-slate-500">Kepala:</div>
-                          {editKuaId === kua.id ? (
-                            <input value={kua.kepala || ''} onChange={(e) => updateKuaLocal(kua.id, 'kepala', e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500" />
-                          ) : (
-                            <div className="font-medium">{kua.kepala}</div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-2 items-end">
-                        <button
-                          onClick={async () => {
-                            if (editKuaId === kua.id) {
-                              try {
-                                setLoading(true);
-                                await persistKuaRow(kua);
-                                setEditKuaId(null);
-                              } catch (e) {
-                                setDataError(e?.message || String(e));
-                              } finally {
-                                setLoading(false);
-                              }
-                            } else {
-                              setEditKuaId(kua.id);
-                            }
-                          }}
-                          className="p-2 rounded hover:bg-slate-100 text-slate-500 hover:text-emerald-600"
-                          title={editKuaId === kua.id ? 'Simpan' : 'Edit'}
-                        >
-                          {editKuaId === kua.id ? <Save width={16} height={16} /> : <Edit2 width={16} height={16} />}
-                        </button>
-                        <button
-                          onClick={() => handleDeleteKua(kua)}
-                          className="p-2 rounded hover:bg-red-50 text-red-500 hover:text-red-700"
-                          title="Hapus"
-                        >
-                          <Trash width={16} height={16} />
-                        </button>
-                      </div>
+            {!session ? <div className="p-6"><div className="p-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-sm">Login diperlukan.</div></div> : (
+              <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredKua.map((kua) => (
+                  <div key={kua.id} className={`rounded-xl border shadow-sm p-5 ${editKuaId === kua.id ? 'bg-amber-50' : 'bg-white'}`}>
+                    <div className="flex justify-between gap-3">
+                      <div className="w-full">{editKuaId === kua.id ? <input value={kua.nama} onChange={(e) => updateKuaLocal(kua.id, 'nama', e.target.value)} className="w-full border rounded px-2 py-1 mb-2" /> : <h3 className="font-bold text-slate-800 truncate">{kua.nama}</h3>}
+                      <div className="text-sm text-slate-600">{editKuaId === kua.id ? <input value={kua.kepala} onChange={(e) => updateKuaLocal(kua.id, 'kepala', e.target.value)} className="w-full border rounded px-2 py-1" /> : kua.kepala}</div></div>
+                      <div className="flex flex-col gap-2"><button onClick={async () => { if (editKuaId === kua.id) { await persistKuaRow(kua); setEditKuaId(null); } else { setEditKuaId(kua.id); } }} className="p-2 rounded hover:bg-slate-100 text-slate-500">{editKuaId === kua.id ? <Save width={16} /> : <Edit2 width={16} />}</button><button onClick={() => handleDeleteKua(kua)} className="p-2 rounded hover:bg-red-50 text-red-500"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>
                     </div>
-
-                    <div className="mt-4 flex items-center gap-2 flex-wrap">
-                      {editKuaId === kua.id ? (
-                        <>
-                          <select value={kua.status || ''} onChange={(e) => updateKuaLocal(kua.id, 'status', e.target.value)} className="border rounded-lg px-3 py-2 text-sm">
-                            <option value="Prima">Prima</option>
-                            <option value="Siaga">Siaga</option>
-                            <option value="Perlu Perhatian">Perlu Perhatian</option>
-                            <option value="Manual">Manual</option>
-                          </select>
-                          <select value={kua.layanan || ''} onChange={(e) => updateKuaLocal(kua.id, 'layanan', e.target.value)} className="border rounded-lg px-3 py-2 text-sm">
-                            <option value="Online">Online</option>
-                            <option value="Hybrid">Hybrid</option>
-                            <option value="Manual">Manual</option>
-                          </select>
-                        </>
-                      ) : (
-                        <>
-                          <Pill variant={kua.status === 'Prima' ? 'green' : kua.status === 'Siaga' ? 'blue' : kua.status === 'Perlu Perhatian' ? 'amber' : 'slate'}>{kua.status || '-'}</Pill>
-                          <Pill variant={(kua.layanan || '').toLowerCase() === 'online' ? 'blue' : (kua.layanan || '').toLowerCase() === 'hybrid' ? 'amber' : 'slate'}>{kua.layanan || '-'}</Pill>
-                        </>
-                      )}
-                    </div>
+                    <div className="mt-4 flex gap-2">{editKuaId === kua.id ? <><select value={kua.status} onChange={(e) => updateKuaLocal(kua.id, 'status', e.target.value)} className="border rounded text-xs"><option value="Prima">Prima</option><option value="Siaga">Siaga</option><option value="Perlu Perhatian">Perlu Perhatian</option></select></> : <Pill variant={kua.status === 'Prima' ? 'green' : 'slate'}>{kua.status}</Pill>}</div>
                   </div>
                 ))}
-                </div>
               </div>
             )}
           </div>
         );
       };
 
-      // --- Landing Page Publik (guest) ---
       const PublicHero = () => (
         <div className="bg-emerald-700 text-white py-12 px-4 text-center rounded-b-3xl shadow-lg">
           <h1 className="text-3xl md:text-4xl font-bold mb-2">SIMANIS Banggai</h1>
-          <p className="text-lg md:text-xl mb-4">Gerbang Layanan & Informasi Bimas Islam Kab. Banggai</p>
-          <div className="max-w-xl mx-auto text-emerald-100 text-sm mb-4">Akses data KUA, layanan digital, berita, dan konsultasi online dalam satu aplikasi.</div>
+          <p className="text-lg md:text-xl mb-4">Gerbang Layanan & Informasi Bimas Islam</p>
+          <div className="max-w-xl mx-auto text-emerald-100 text-sm">Akses data KUA, layanan digital, berita, dan konsultasi online dalam satu aplikasi.</div>
         </div>
       );
 
       const PublicStats = () => (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-8">
           <div className="bg-pink-100 text-pink-700 rounded-xl p-4 text-center font-bold">1.450+<div className="text-xs font-normal text-pink-600 mt-1">Peristiwa Nikah</div></div>
-          <div className="bg-emerald-100 text-emerald-700 rounded-xl p-4 text-center font-bold">523<div className="text-xs font-normal text-emerald-600 mt-1">Masjid & Musholla</div></div>
-          <div className="bg-blue-100 text-blue-700 rounded-xl p-4 text-center font-bold">89<div className="text-xs font-normal text-blue-600 mt-1">Penyuluh Agama</div></div>
-          <div className="bg-amber-100 text-amber-700 rounded-xl p-4 text-center font-bold">24<div className="text-xs font-normal text-amber-600 mt-1">KUA Kecamatan</div></div>
+          <div className="bg-emerald-100 text-emerald-700 rounded-xl p-4 text-center font-bold">523<div className="text-xs font-normal text-emerald-600 mt-1">Masjid</div></div>
+          <div className="bg-blue-100 text-blue-700 rounded-xl p-4 text-center font-bold">89<div className="text-xs font-normal text-blue-600 mt-1">Penyuluh</div></div>
+          <div className="bg-amber-100 text-amber-700 rounded-xl p-4 text-center font-bold">24<div className="text-xs font-normal text-amber-600 mt-1">KUA</div></div>
         </div>
       );
 
@@ -1179,47 +801,19 @@
         <div className="my-8">
           <h2 className="text-xl font-bold mb-4 text-emerald-800">Layanan Digital</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a href="https://simkah.kemenag.go.id/" target="_blank" rel="noopener" className="bg-white border border-emerald-100 rounded-xl p-4 shadow hover:shadow-md transition">
-              <div className="font-bold text-emerald-700 mb-1">SIMKAH</div>
-              <div className="text-xs text-slate-500">Sistem Informasi Manajemen Nikah</div>
-            </a>
-            <a href="https://simas.kemenag.go.id/" target="_blank" rel="noopener" className="bg-white border border-emerald-100 rounded-xl p-4 shadow hover:shadow-md transition">
-              <div className="font-bold text-emerald-700 mb-1">SIMAS</div>
-              <div className="text-xs text-slate-500">Data Masjid & Musholla</div>
-            </a>
-            <a href="https://siwak.kemenag.go.id/" target="_blank" rel="noopener" className="bg-white border border-emerald-100 rounded-xl p-4 shadow hover:shadow-md transition">
-              <div className="font-bold text-emerald-700 mb-1">SIWAK</div>
-              <div className="text-xs text-slate-500">Sistem Informasi Wakaf</div>
-            </a>
-            <a href="https://bimasislam.kemenag.go.id/jadwalshalat" target="_blank" rel="noopener" className="bg-white border border-emerald-100 rounded-xl p-4 shadow hover:shadow-md transition">
-              <div className="font-bold text-emerald-700 mb-1">Jadwal Shalat</div>
-              <div className="text-xs text-slate-500">Kab. Banggai</div>
-            </a>
-            <div onClick={() => alert('Fitur Unduh Dokumen akan segera tersedia!')} className="bg-white border border-emerald-100 rounded-xl p-4 shadow hover:shadow-md transition cursor-pointer">
-              <div className="font-bold text-emerald-700 mb-1">Unduh Dokumen</div>
-              <div className="text-xs text-slate-500">Formulir & Regulasi</div>
-            </div>
-            <div onClick={() => alert('Fitur Konsultasi Online akan segera tersedia!')} className="bg-white border border-emerald-100 rounded-xl p-4 shadow hover:shadow-md transition cursor-pointer">
-              <div className="font-bold text-emerald-700 mb-1">Konsultasi Online</div>
-              <div className="text-xs text-slate-500">Tanya Jawab Syariah</div>
-            </div>
+            <a href="#" className="bg-white border border-emerald-100 rounded-xl p-4 shadow hover:shadow-md transition"><div className="font-bold text-emerald-700 mb-1">SIMKAH</div><div className="text-xs text-slate-500">Sistem Informasi Manajemen Nikah</div></a>
+            <a href="#" className="bg-white border border-emerald-100 rounded-xl p-4 shadow hover:shadow-md transition"><div className="font-bold text-emerald-700 mb-1">SIMAS</div><div className="text-xs text-slate-500">Data Masjid & Musholla</div></a>
+            <a href="#" className="bg-white border border-emerald-100 rounded-xl p-4 shadow hover:shadow-md transition"><div className="font-bold text-emerald-700 mb-1">Jadwal Shalat</div><div className="text-xs text-slate-500">Kab. Banggai</div></a>
           </div>
         </div>
       );
 
-      // Data KUA publik (baca dari kua_public)
       const [kuaPublik, setKuaPublik] = useState([]);
       useEffect(() => {
-        // Pastikan supabase sudah terinisialisasi
         if (!session && supabase) {
           supabase.from('kua_public').select('*').order('nama', { ascending: true })
-            .then(({ data, error }) => {
-              if (error) setKuaPublik([]);
-              else setKuaPublik(data || []);
-            })
+            .then(({ data }) => setKuaPublik(data || []))
             .catch(() => setKuaPublik([]));
-        } else {
-          setKuaPublik([]);
         }
       }, [session]);
 
@@ -1227,17 +821,12 @@
         <div className="my-8">
           <h2 className="text-xl font-bold mb-4 text-emerald-800">Data KUA Kecamatan</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {kuaPublik.length === 0 ? (
-              <div className="col-span-3 text-slate-500 text-sm">Data KUA belum tersedia.</div>
-            ) : kuaPublik.map((k) => (
+            {kuaPublik.length === 0 ? <div className="col-span-3 text-slate-500 text-sm">Data KUA belum tersedia.</div> : kuaPublik.map((k) => (
               <div key={k.id || k.nama} className="rounded-xl border border-slate-100 bg-white shadow-sm p-4">
                 <div className="font-bold text-emerald-700">{k.nama}</div>
                 <div className="text-xs text-slate-500 mb-1">{k.alamat}</div>
                 <div className="text-sm mb-1">Kepala: <span className="font-medium">{k.kepala}</span></div>
-                <div className="flex gap-2 flex-wrap mt-2">
-                  <span className="px-2 py-1 rounded bg-emerald-50 text-emerald-700 text-xs font-medium">{k.status}</span>
-                  <span className="px-2 py-1 rounded bg-blue-50 text-blue-700 text-xs font-medium">{k.layanan}</span>
-                </div>
+                <div className="flex gap-2 flex-wrap mt-2"><span className="px-2 py-1 rounded bg-emerald-50 text-emerald-700 text-xs font-medium">{k.status}</span></div>
               </div>
             ))}
           </div>
@@ -1247,98 +836,26 @@
       const PublicView = () => (
         <div className="max-w-4xl mx-auto px-4 py-8">
           <PublicHero />
-          <PublicMarquee />
+          {/* PublicMarquee dihapus dari sini karena sudah ada di Layout */}
           <PublicStats />
           <PublicLayanan />
           <PublicKua />
-          <div className="mt-12 pt-6 border-t border-slate-100 text-center pb-8">
-             <p className="text-xs text-slate-400 mb-2">Versi Aplikasi: 1.1.0 (Update Terbaru)</p>
-             <button onClick={async () => {
-                if ('serviceWorker' in navigator) {
-                  const registrations = await navigator.serviceWorker.getRegistrations();
-                  for (const registration of registrations) await registration.unregister();
-                }
-                window.location.reload(true);
-             }} className="text-xs text-emerald-600 font-medium border border-emerald-200 rounded px-3 py-1 hover:bg-emerald-50">
-               Paksa Update / Refresh
-             </button>
-          </div>
+          <div className="mt-12 pt-6 border-t border-slate-100 text-center pb-8"><p className="text-xs text-slate-400 mb-2">Versi 1.1.0 Fixed Marquee</p></div>
         </div>
       );
 
       let view;
-      if (activeTab === 'settings') {
-        view = (
-            <SettingsView
-              config={config}
-              loading={loading}
-              authMode={authMode}
-              authError={authError}
-              authSuccess={authSuccess}
-              emailRef={emailRef}
-              passwordRef={passwordRef}
-              onChangeAuthMode={setAuthMode}
-              onSubmitAuth={handleAuth}
-              onSaveConfig={handleSaveConfig}
-              onClearConfig={handleClearConfig}
-            />
-        );
-      } else if (activeTab === 'rkt') {
-        view = <RKTView />;
-      } else if (activeTab === 'kua') {
-        view = <KUAView />;
-      } else {
-        // Dashboard Tab
-        if (!session) {
-          view = <PublicView />;
-        } else {
-          view = <DashboardView />;
-        }
-      }
+      if (activeTab === 'settings') view = <SettingsView config={config} loading={loading} authMode={authMode} authError={authError} authSuccess={authSuccess} emailRef={emailRef} passwordRef={passwordRef} onChangeAuthMode={setAuthMode} onSubmitAuth={handleAuth} onSaveConfig={handleSaveConfig} onClearConfig={handleClearConfig} session={session} />;
+      else if (activeTab === 'rkt') view = <RKTView />;
+      else if (activeTab === 'kua') view = <KUAView />;
+      else view = !session ? <PublicView /> : <DashboardView />;
 
-      return (
-        <Layout
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          session={session}
-          onLogout={handleLogout}
-          onResetData={handleResetData}
-          loading={loading}
-          dataError={dataError}
-        >
-          <div className="max-w-6xl mx-auto px-4">
-            <PublicMarquee />
-          </div>
-          {view}
-        </Layout>
-      );
+      return <Layout activeTab={activeTab} onTabChange={setActiveTab} session={session} onLogout={handleLogout} onResetData={handleResetData} loading={loading} dataError={dataError}>{view}</Layout>;
     };
 
     const rootEl = document.getElementById('root');
-    if (rootEl) {
-      ReactDOM.createRoot(rootEl).render(<SIMANISApp />);
-    } else {
-      console.error("Error: Elemen <div id='root'> tidak ditemukan.");
-    }
-    // Penutup callback waitForSupabase
+    if (rootEl) ReactDOM.createRoot(rootEl).render(<SIMANISApp />);
   });
-  </script>
-
-  <script>
-    // Registrasi Service Worker dengan penanganan error
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function () {
-        navigator.serviceWorker
-          .register('./service-worker.js')
-          .then(function(registration) {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-          })
-          .catch(function (err) {
-            console.log('Service worker registration failed:', err);
-            // Jika gagal register, tidak masalah, aplikasi tetap jalan online
-          });
-      });
-    }
   </script>
 </body>
 </html>
