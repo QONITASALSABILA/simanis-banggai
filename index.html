@@ -1117,7 +1117,7 @@ window.addEventListener('DOMContentLoaded', function() {
       const [kuaPublik, setKuaPublik] = useState([]);
       useEffect(() => {
         // Pastikan supabase sudah terinisialisasi
-        if (!session && window.supabase && typeof supabase !== 'undefined') {
+        if (!session && supabase) {
           supabase.from('kua_public').select('*').order('nama', { ascending: true })
             .then(({ data, error }) => {
               if (error) setKuaPublik([]);

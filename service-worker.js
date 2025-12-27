@@ -1,8 +1,7 @@
-const CACHE_NAME = 'simanis-cache-v4';
+const CACHE_NAME = 'simanis-cache-v5';
 const URLS_TO_CACHE = [
   './',
   './index.html',
-  './manifest.webmanifest',
 ];
 
 self.addEventListener('install', (event) => {
