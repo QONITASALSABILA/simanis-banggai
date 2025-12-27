@@ -1,8 +1,13 @@
-const CACHE_NAME = 'simanis-cache-v13';
+const CACHE_NAME = 'simanis-cache-v14';
 const URLS_TO_CACHE = [
   './',
   './index.html',
   './manifest.webmanifest',
+  'https://cdn.tailwindcss.com',
+  'https://unpkg.com/react@18/umd/react.development.js',
+  'https://unpkg.com/react-dom@18/umd/react-dom.development.js',
+  'https://unpkg.com/@babel/standalone/babel.min.js',
+  'https://unpkg.com/@supabase/supabase-js@2'
 ];
 
 self.addEventListener('install', (event) => {
