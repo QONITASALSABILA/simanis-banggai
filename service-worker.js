@@ -1,4 +1,4 @@
-const CACHE_NAME = 'simanis-cache-v18';
+const CACHE_NAME = 'simanis-cache-v19';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -33,15 +33,28 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request).then((response) => {
-        if (response) return response;
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-        return new Response('', { status: 404, statusText: 'Not Found' });
-      });
-    })
-  );
+  // Cek apakah request menuju CDN (Library eksternal)
+  const isCDN = event.request.url.includes('unpkg.com') || event.request.url.includes('cdn.tailwindcss.com');
+
+  if (isCDN) {
+    // Strategi Cache First untuk Library: Cek cache dulu, kalau ada langsung pakai (Lebih Cepat & Stabil)
+    event.respondWith(
+      caches.match(event.request).then((response) => {
+        return response || fetch(event.request);
+      })
+    );
+  } else {
+    // Strategi Network First untuk App: Coba internet dulu, kalau offline baru cache
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match(event.request).then((response) => {
+          if (response) return response;
+          if (event.request.mode === 'navigate') {
+            return caches.match('./index.html');
+          }
+          return new Response('', { status: 404, statusText: 'Not Found' });
+        });
+      })
+    );
+  }
 });
