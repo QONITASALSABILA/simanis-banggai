@@ -195,7 +195,7 @@
     // Layout utama aplikasi
     const Layout = ({ children, activeTab, onTabChange, session, onLogout, onResetData, loading, dataError }) => (
         <div className="min-h-screen">
-          <div className="bg-gradient-to-br from-emerald-700 to-emerald-900">
+          <div className="bg-gradient-to-br from-emerald-700 to-emerald-900 relative z-50">
             <div className="max-w-6xl mx-auto px-4 py-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
@@ -1134,14 +1134,14 @@
               <div className="font-bold text-emerald-700 mb-1">Jadwal Shalat</div>
               <div className="text-xs text-slate-500">Kab. Banggai</div>
             </a>
-            <a href="#" className="bg-white border border-emerald-100 rounded-xl p-4 shadow hover:shadow-md transition">
+            <div onClick={() => alert('Fitur Unduh Dokumen akan segera tersedia!')} className="bg-white border border-emerald-100 rounded-xl p-4 shadow hover:shadow-md transition cursor-pointer">
               <div className="font-bold text-emerald-700 mb-1">Unduh Dokumen</div>
               <div className="text-xs text-slate-500">Formulir & Regulasi</div>
-            </a>
-            <a href="#" className="bg-white border border-emerald-100 rounded-xl p-4 shadow hover:shadow-md transition">
+            </div>
+            <div onClick={() => alert('Fitur Konsultasi Online akan segera tersedia!')} className="bg-white border border-emerald-100 rounded-xl p-4 shadow hover:shadow-md transition cursor-pointer">
               <div className="font-bold text-emerald-700 mb-1">Konsultasi Online</div>
               <div className="text-xs text-slate-500">Tanya Jawab Syariah</div>
-            </a>
+            </div>
           </div>
         </div>
       );
@@ -1190,13 +1190,25 @@
           <PublicMarquee />
           <PublicLayanan />
           <PublicKua />
+          
+          <div className="mt-12 pt-6 border-t border-slate-100 text-center pb-8">
+             <p className="text-xs text-slate-400 mb-2">Versi Aplikasi: 1.1.0 (Update Terbaru)</p>
+             <button onClick={async () => {
+                if ('serviceWorker' in navigator) {
+                  const registrations = await navigator.serviceWorker.getRegistrations();
+                  for (const registration of registrations) await registration.unregister();
+                }
+                window.location.reload(true);
+             }} className="text-xs text-emerald-600 font-medium border border-emerald-200 rounded px-3 py-1 hover:bg-emerald-50">
+               Paksa Update / Refresh
+             </button>
+          </div>
         </div>
       );
 
-      const view = !session
-        ? <PublicView />
-        : activeTab === 'settings'
-          ? (
+      let view;
+      if (activeTab === 'settings') {
+        view = (
             <SettingsView
               config={config}
               loading={loading}
@@ -1210,12 +1222,19 @@
               onSaveConfig={handleSaveConfig}
               onClearConfig={handleClearConfig}
             />
-          )
-          : activeTab === 'rkt'
-            ? <RKTView />
-            : activeTab === 'kua'
-              ? <KUAView />
-              : <DashboardView />;
+        );
+      } else if (activeTab === 'rkt') {
+        view = <RKTView />;
+      } else if (activeTab === 'kua') {
+        view = <KUAView />;
+      } else {
+        // Dashboard Tab
+        if (!session) {
+          view = <PublicView />;
+        } else {
+          view = <DashboardView />;
+        }
+      }
 
       return (
         <Layout
@@ -1255,15 +1274,6 @@
           });
       });
     }
-
-    // Safety check: Jika dalam 5 detik React belum jalan, tampilkan error manual
-    setTimeout(function() {
-      const root = document.getElementById('root');
-      if (root && root.innerText.includes('Sedang Memuat')) {
-        // Jika masih loading setelah 5 detik, anggap gagal (entah karena library atau script error)
-        root.innerHTML = '<div style="padding:20px; color:red; font-family:sans-serif; text-align:center; background:#fff0f0; border:1px solid red; border-radius:8px; margin:20px;"><h3>⚠️ Aplikasi Tidak Merespons</h3><p>Script aplikasi tidak berjalan. Ini biasanya terjadi karena koneksi lambat atau browser memblokir script.</p><button onclick="window.location.reload(true)" style="margin-top:10px; padding:8px 16px; cursor:pointer;">Muat Ulang</button></div>';
-      }
-    }, 5000);
   </script>
 </body>
 </html>
