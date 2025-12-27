@@ -36,6 +36,10 @@
       display: inline-block;
       white-space: nowrap;
       animation: marquee 25s linear infinite;
+      /* Optimasi GPU untuk mencegah flicker */
+      will-change: transform;
+      backface-visibility: hidden;
+      transform: translateZ(0);
     }
     .animate-marquee:hover {
       animation-play-state: paused;
