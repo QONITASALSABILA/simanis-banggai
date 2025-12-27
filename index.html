@@ -20,8 +20,11 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <!-- Babel -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <!-- Supabase JS (UMD) -->
-  <script crossorigin src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <!-- Supabase JS (ESM) -->
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    window.supabase = { createClient };
+  </script>
 </head>
 <body>
   <!-- Teks Loading Default (Akan hilang jika React berhasil jalan) -->

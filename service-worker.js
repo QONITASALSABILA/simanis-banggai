@@ -1,4 +1,4 @@
-const CACHE_NAME = 'simanis-cache-v19';
+const CACHE_NAME = 'simanis-cache-v20';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -7,7 +7,7 @@ const URLS_TO_CACHE = [
   'https://unpkg.com/react@18/umd/react.development.js',
   'https://unpkg.com/react-dom@18/umd/react-dom.development.js',
   'https://unpkg.com/@babel/standalone/babel.min.js',
-  'https://unpkg.com/@supabase/supabase-js@2'
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 ];
 
 self.addEventListener('install', (event) => {
@@ -34,7 +34,7 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   // Cek apakah request menuju CDN (Library eksternal)
-  const isCDN = event.request.url.includes('unpkg.com') || event.request.url.includes('cdn.tailwindcss.com');
+  const isCDN = event.request.url.includes('unpkg.com') || event.request.url.includes('cdn.tailwindcss.com') || event.request.url.includes('cdn.jsdelivr.net');
 
   if (isCDN) {
     // Strategi Cache First untuk Library: Cek cache dulu, kalau ada langsung pakai (Lebih Cepat & Stabil)
